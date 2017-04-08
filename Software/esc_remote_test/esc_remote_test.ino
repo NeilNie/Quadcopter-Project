@@ -43,6 +43,7 @@ void loop() {
 
   while (zero_timer + 4000 > micros());                      //Start the pulse after 4000 micro seconds.
   zero_timer = micros();                                     //Reset the zero timer.
+  //receiver_input_channel_2 = 1300;
   PORTD |= B11110000; //Set digital outputs 4,5,6 and 7 high.
   timer_channel_1 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 4 is set low.
   timer_channel_2 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 5 is set low.

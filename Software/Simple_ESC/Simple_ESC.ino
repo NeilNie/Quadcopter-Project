@@ -8,11 +8,11 @@ int buttonState = 0;
 void setup() {
   pinMode(2, INPUT);
   Serial.begin(9600);
-  DDRD |= B01100000;                                 //Configure digital poort 4, 5, 6 and 7 as output
+  DDRD |= B11110000;                                 //Configure digital poort 4, 5, 6 and 7 as output
 
-  PORTD |= B01100000;                              //Set digital poort 4, 5, 6 and 7 high.
+  PORTD |= B11110000;                              //Set digital poort 4, 5, 6 and 7 high.
   delayMicroseconds(1000);                         //Wait 1000us (We can use delayMicroseconds because the receiver interrupt routine is not used).
-  PORTD &= B10011111;                              //Set digital poort 4, 5, 6 and 7 low.
+  PORTD &= B00001111;                              //Set digital poort 4, 5, 6 and 7 low.
   delay(3);
   Serial.println("Starting");
   start = 0;

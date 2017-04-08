@@ -13,8 +13,6 @@
 		2814EBA91E6BB2EB00203947 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2814EBA71E6BB2EB00203947 /* Main.storyboard */; };
 		2814EBAB1E6BB2EB00203947 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2814EBAA1E6BB2EB00203947 /* Assets.xcassets */; };
 		2814EBAE1E6BB2EB00203947 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2814EBAC1E6BB2EB00203947 /* LaunchScreen.storyboard */; };
-		2814EBB91E6BB2EB00203947 /* Quadcopter_ControllerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2814EBB81E6BB2EB00203947 /* Quadcopter_ControllerTests.m */; };
-		2814EBC41E6BB2EB00203947 /* Quadcopter_ControllerUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 2814EBC31E6BB2EB00203947 /* Quadcopter_ControllerUITests.m */; };
 		283F455E1E6C79230025B81D /* Back_000000_100.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F455A1E6C79230025B81D /* Back_000000_100.png */; };
 		283F455F1E6C79230025B81D /* Expand Arrow_000000_100 2.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F455B1E6C79230025B81D /* Expand Arrow_000000_100 2.png */; };
 		283F45601E6C79230025B81D /* Expand Arrow_000000_100.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F455C1E6C79230025B81D /* Expand Arrow_000000_100.png */; };
@@ -24,6 +22,8 @@
 		283F45671E6C7A1D0025B81D /* ruler-1 copy.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F45661E6C7A1C0025B81D /* ruler-1 copy.png */; };
 		283F45691E6C7AC00025B81D /* circle.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F45681E6C7AC00025B81D /* circle.png */; };
 		283F456B1E6C7EEE0025B81D /* Brake Warning_000000_100.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F456A1E6C7EEE0025B81D /* Brake Warning_000000_100.png */; };
+		28CAB58D1E98675F00199256 /* BTDiscovery.m in Sources */ = {isa = PBXBuildFile; fileRef = 28CAB58A1E98675F00199256 /* BTDiscovery.m */; };
+		28CAB58E1E98675F00199256 /* BTService.m in Sources */ = {isa = PBXBuildFile; fileRef = 28CAB58C1E98675F00199256 /* BTService.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,11 +55,7 @@
 		2814EBAD1E6BB2EB00203947 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2814EBAF1E6BB2EB00203947 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2814EBB41E6BB2EB00203947 /* Quadcopter ControllerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Quadcopter ControllerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		2814EBB81E6BB2EB00203947 /* Quadcopter_ControllerTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Quadcopter_ControllerTests.m; sourceTree = "<group>"; };
-		2814EBBA1E6BB2EB00203947 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2814EBBF1E6BB2EB00203947 /* Quadcopter ControllerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Quadcopter ControllerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		2814EBC31E6BB2EB00203947 /* Quadcopter_ControllerUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Quadcopter_ControllerUITests.m; sourceTree = "<group>"; };
-		2814EBC51E6BB2EB00203947 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		283F455A1E6C79230025B81D /* Back_000000_100.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Back_000000_100.png; sourceTree = "<group>"; };
 		283F455B1E6C79230025B81D /* Expand Arrow_000000_100 2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Expand Arrow_000000_100 2.png"; sourceTree = "<group>"; };
 		283F455C1E6C79230025B81D /* Expand Arrow_000000_100.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Expand Arrow_000000_100.png"; sourceTree = "<group>"; };
@@ -69,6 +65,10 @@
 		283F45661E6C7A1C0025B81D /* ruler-1 copy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ruler-1 copy.png"; sourceTree = "<group>"; };
 		283F45681E6C7AC00025B81D /* circle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = circle.png; sourceTree = "<group>"; };
 		283F456A1E6C7EEE0025B81D /* Brake Warning_000000_100.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Brake Warning_000000_100.png"; sourceTree = "<group>"; };
+		28CAB5891E98675F00199256 /* BTDiscovery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BTDiscovery.h; sourceTree = "<group>"; };
+		28CAB58A1E98675F00199256 /* BTDiscovery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BTDiscovery.m; sourceTree = "<group>"; };
+		28CAB58B1E98675F00199256 /* BTService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BTService.h; sourceTree = "<group>"; };
+		28CAB58C1E98675F00199256 /* BTService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BTService.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,8 +100,6 @@
 			isa = PBXGroup;
 			children = (
 				2814EB9D1E6BB2EB00203947 /* Quadcopter Controller */,
-				2814EBB71E6BB2EB00203947 /* Quadcopter ControllerTests */,
-				2814EBC21E6BB2EB00203947 /* Quadcopter ControllerUITests */,
 				2814EB9C1E6BB2EB00203947 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -119,6 +117,7 @@
 		2814EB9D1E6BB2EB00203947 /* Quadcopter Controller */ = {
 			isa = PBXGroup;
 			children = (
+				28CAB58F1E98676400199256 /* Bluetooth */,
 				2814EBA11E6BB2EB00203947 /* AppDelegate.h */,
 				2814EBA21E6BB2EB00203947 /* AppDelegate.m */,
 				2814EBA41E6BB2EB00203947 /* ViewController.h */,
@@ -141,24 +140,6 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		2814EBB71E6BB2EB00203947 /* Quadcopter ControllerTests */ = {
-			isa = PBXGroup;
-			children = (
-				2814EBB81E6BB2EB00203947 /* Quadcopter_ControllerTests.m */,
-				2814EBBA1E6BB2EB00203947 /* Info.plist */,
-			);
-			path = "Quadcopter ControllerTests";
-			sourceTree = "<group>";
-		};
-		2814EBC21E6BB2EB00203947 /* Quadcopter ControllerUITests */ = {
-			isa = PBXGroup;
-			children = (
-				2814EBC31E6BB2EB00203947 /* Quadcopter_ControllerUITests.m */,
-				2814EBC51E6BB2EB00203947 /* Info.plist */,
-			);
-			path = "Quadcopter ControllerUITests";
-			sourceTree = "<group>";
-		};
 		283F456C1E6C80E30025B81D /* Media */ = {
 			isa = PBXGroup;
 			children = (
@@ -173,6 +154,17 @@
 				283F455D1E6C79230025B81D /* Forward_000000_100.png */,
 			);
 			name = Media;
+			sourceTree = "<group>";
+		};
+		28CAB58F1E98676400199256 /* Bluetooth */ = {
+			isa = PBXGroup;
+			children = (
+				28CAB5891E98675F00199256 /* BTDiscovery.h */,
+				28CAB58A1E98675F00199256 /* BTDiscovery.m */,
+				28CAB58B1E98675F00199256 /* BTService.h */,
+				28CAB58C1E98675F00199256 /* BTService.m */,
+			);
+			name = Bluetooth;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -320,8 +312,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				28CAB58E1E98675F00199256 /* BTService.m in Sources */,
 				2814EBA61E6BB2EB00203947 /* ViewController.m in Sources */,
 				2814EBA31E6BB2EB00203947 /* AppDelegate.m in Sources */,
+				28CAB58D1E98675F00199256 /* BTDiscovery.m in Sources */,
 				2814EBA01E6BB2EB00203947 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -330,7 +324,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2814EBB91E6BB2EB00203947 /* Quadcopter_ControllerTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,7 +331,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2814EBC41E6BB2EB00203947 /* Quadcopter_ControllerUITests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

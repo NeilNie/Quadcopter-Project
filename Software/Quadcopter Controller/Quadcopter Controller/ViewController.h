@@ -10,6 +10,8 @@
 
 @interface ViewController : UIViewController
 
+@property CGPoint leftPosition;
+@property CGPoint rightPosition;
 @property (weak, nonatomic) IBOutlet UIImageView *leftBase;
 @property (weak, nonatomic) IBOutlet UIImageView *rightBase;
 @property (weak, nonatomic) IBOutlet UIView *leftStick;
