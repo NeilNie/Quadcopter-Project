@@ -40,7 +40,7 @@
 }
 
 - (void)startScanning {
-    [self.centralManager scanForPeripheralsWithServices:@[RWT_BLE_SERVICE_UUID] options:nil];
+    [self.centralManager scanForPeripheralsWithServices:nil options:nil];
 }
 
 #pragma mark - Custom Accessors
@@ -122,21 +122,21 @@
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
     
     switch (self.centralManager.state) {
-        case CBCentralManagerStatePoweredOff:
+        case CBManagerStatePoweredOff:
         {
             [self clearDevices];
             
             break;
         }
 
-        case CBCentralManagerStatePoweredOn:
+        case CBManagerStatePoweredOn:
         {
             [self startScanning];
             
             break;
         }
             
-        case CBCentralManagerStateResetting:
+        case CBManagerStateResetting:
         {
             [self clearDevices];
             break;

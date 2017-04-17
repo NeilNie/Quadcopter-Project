@@ -14,6 +14,22 @@
 
 @implementation ViewController
 
+#pragma BLEManager Delegate
+
+-(void)BLEManagerFeedback:(NSString *)feedback{
+    NSLog(@"feedback");
+}
+
+-(void)didConnectToPeripheral:(CBPeripheral *)peripheral{
+    NSLog(@"connected: %@", peripheral.name);
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Connected!" message:[NSString stringWithFormat:@"Did connect to %@", peripheral.name] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *action= [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:action];
+    [self showViewController:alert sender:nil];
+}
+
+#pragma mark - Private
+
 -(void)rightPan:(UIPanGestureRecognizer *)pan{
 
     if (pan.state == UIGestureRecognizerStateEnded) {
@@ -70,6 +86,10 @@
     self.rightStick.layer.cornerRadius = 5;
     self.leftStick.layer.masksToBounds = YES;
     self.rightStick.layer.masksToBounds = YES;
+    
+    self.manager = [[BLEManager alloc] init];
+    self.manager.delegate = self;
+    //[self.manager startScanning];
     // Do any additional setup after loading the view, typically from a nib.
 }
 

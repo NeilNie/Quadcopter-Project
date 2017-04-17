@@ -7,11 +7,15 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <CoreBluetooth/CoreBluetooth.h>
+#import "BLEManager.h"
 
-@interface ViewController : UIViewController
+@interface ViewController : UIViewController <BLEManagerDelegate>
 
 @property CGPoint leftPosition;
 @property CGPoint rightPosition;
+
+@property (strong, nonatomic) BLEManager *manager;
 @property (weak, nonatomic) IBOutlet UIImageView *leftBase;
 @property (weak, nonatomic) IBOutlet UIImageView *rightBase;
 @property (weak, nonatomic) IBOutlet UIView *leftStick;

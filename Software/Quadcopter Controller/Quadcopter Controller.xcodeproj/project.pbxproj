@@ -13,6 +13,9 @@
 		2814EBA91E6BB2EB00203947 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2814EBA71E6BB2EB00203947 /* Main.storyboard */; };
 		2814EBAB1E6BB2EB00203947 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2814EBAA1E6BB2EB00203947 /* Assets.xcassets */; };
 		2814EBAE1E6BB2EB00203947 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2814EBAC1E6BB2EB00203947 /* LaunchScreen.storyboard */; };
+		281EDBF91EA3B0C100A94770 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 281EDBF81EA3B0C100A94770 /* CoreBluetooth.framework */; };
+		281EDBFC1EA451AA00A94770 /* BLEManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 281EDBFB1EA451AA00A94770 /* BLEManager.m */; };
+		281EDBFF1EA451B200A94770 /* BLEPeripheral.m in Sources */ = {isa = PBXBuildFile; fileRef = 281EDBFE1EA451B200A94770 /* BLEPeripheral.m */; };
 		283F455E1E6C79230025B81D /* Back_000000_100.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F455A1E6C79230025B81D /* Back_000000_100.png */; };
 		283F455F1E6C79230025B81D /* Expand Arrow_000000_100 2.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F455B1E6C79230025B81D /* Expand Arrow_000000_100 2.png */; };
 		283F45601E6C79230025B81D /* Expand Arrow_000000_100.png in Resources */ = {isa = PBXBuildFile; fileRef = 283F455C1E6C79230025B81D /* Expand Arrow_000000_100.png */; };
@@ -56,6 +59,11 @@
 		2814EBAF1E6BB2EB00203947 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2814EBB41E6BB2EB00203947 /* Quadcopter ControllerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Quadcopter ControllerTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		2814EBBF1E6BB2EB00203947 /* Quadcopter ControllerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Quadcopter ControllerUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		281EDBF81EA3B0C100A94770 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		281EDBFA1EA451AA00A94770 /* BLEManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLEManager.h; sourceTree = "<group>"; };
+		281EDBFB1EA451AA00A94770 /* BLEManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLEManager.m; sourceTree = "<group>"; };
+		281EDBFD1EA451B200A94770 /* BLEPeripheral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLEPeripheral.h; sourceTree = "<group>"; };
+		281EDBFE1EA451B200A94770 /* BLEPeripheral.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLEPeripheral.m; sourceTree = "<group>"; };
 		283F455A1E6C79230025B81D /* Back_000000_100.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Back_000000_100.png; sourceTree = "<group>"; };
 		283F455B1E6C79230025B81D /* Expand Arrow_000000_100 2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Expand Arrow_000000_100 2.png"; sourceTree = "<group>"; };
 		283F455C1E6C79230025B81D /* Expand Arrow_000000_100.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Expand Arrow_000000_100.png"; sourceTree = "<group>"; };
@@ -76,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				281EDBF91EA3B0C100A94770 /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,6 +110,7 @@
 			children = (
 				2814EB9D1E6BB2EB00203947 /* Quadcopter Controller */,
 				2814EB9C1E6BB2EB00203947 /* Products */,
+				281EDBF71EA3B0C100A94770 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -140,6 +150,14 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		281EDBF71EA3B0C100A94770 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				281EDBF81EA3B0C100A94770 /* CoreBluetooth.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		283F456C1E6C80E30025B81D /* Media */ = {
 			isa = PBXGroup;
 			children = (
@@ -159,6 +177,10 @@
 		28CAB58F1E98676400199256 /* Bluetooth */ = {
 			isa = PBXGroup;
 			children = (
+				281EDBFA1EA451AA00A94770 /* BLEManager.h */,
+				281EDBFB1EA451AA00A94770 /* BLEManager.m */,
+				281EDBFD1EA451B200A94770 /* BLEPeripheral.h */,
+				281EDBFE1EA451B200A94770 /* BLEPeripheral.m */,
 				28CAB5891E98675F00199256 /* BTDiscovery.h */,
 				28CAB58A1E98675F00199256 /* BTDiscovery.m */,
 				28CAB58B1E98675F00199256 /* BTService.h */,
@@ -317,6 +339,8 @@
 				2814EBA31E6BB2EB00203947 /* AppDelegate.m in Sources */,
 				28CAB58D1E98675F00199256 /* BTDiscovery.m in Sources */,
 				2814EBA01E6BB2EB00203947 /* main.m in Sources */,
+				281EDBFF1EA451B200A94770 /* BLEPeripheral.m in Sources */,
+				281EDBFC1EA451AA00A94770 /* BLEManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

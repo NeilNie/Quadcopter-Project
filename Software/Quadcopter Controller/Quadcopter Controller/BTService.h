@@ -10,7 +10,7 @@
 #import <CoreBluetooth/CoreBluetooth.h>
 
 /* Services & Characteristics UUIDs */
-#define RWT_BLE_SERVICE_UUID		[CBUUID UUIDWithString:@"B8E06067-62AD-41BA-9231-206AE80AB550"]
+#define RWT_BLE_SERVICE_UUID		[CBUUID UUIDWithString:@"D7AC59DF-3F15-45CB-AEBC-1B19199EBD22"]
 #define RWT_POSITION_CHAR_UUID		[CBUUID UUIDWithString:@"BF45E40A-DE2A-4BC8-BBA0-E5D6065F1B4B"]
 
 /* Notifications */
