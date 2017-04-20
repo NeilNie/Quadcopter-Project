@@ -9,9 +9,9 @@ void setup(){
   //Arduino (Atmega) pins default to inputs, so they don't need to be explicitly declared as inputs
   PCICR |= (1 << PCIE0);    // set PCIE0 to enable PCMSK0 scan
   PCMSK0 |= (1 << PCINT0);  // set PCINT0 (digital input 8) to trigger an interrupt on state change
-  PCMSK0 |= (1 << PCINT1);  // set PCINT1 (digital input 9)to trigger an interrupt on state change
-  PCMSK0 |= (1 << PCINT2);  // set PCINT2 (digital input 10)to trigger an interrupt on state change
-  PCMSK0 |= (1 << PCINT3);  // set PCINT3 (digital input 11)to trigger an interrupt on state change
+  PCMSK0 |= (1 << PCINT1);  // set PCINT1 (digital input 9) to trigger an interrupt on state change
+  PCMSK0 |= (1 << PCINT2);  // set PCINT2 (digital input 10) to trigger an interrupt on state change
+  PCMSK0 |= (1 << PCINT3);  // set PCINT3 (digital input 11) to trigger an interrupt on state change
   Serial.begin(9600); 
 }
 

@@ -16,19 +16,33 @@
 
 #pragma BLEManager Delegate
 
+-(void)didDisconnect:(NSError *)error{
+    [self showAlert:@"Fail to connect!" message:[NSString stringWithFormat:@"Fail to connect, error:%@", error.localizedDescription]];
+}
+
 -(void)BLEManagerFeedback:(NSString *)feedback{
     NSLog(@"feedback");
 }
 
 -(void)didConnectToPeripheral:(CBPeripheral *)peripheral{
     NSLog(@"connected: %@", peripheral.name);
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Connected!" message:[NSString stringWithFormat:@"Did connect to %@", peripheral.name] preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *action= [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
-    [alert addAction:action];
-    [self showViewController:alert sender:nil];
+    [self showAlert:@"Connected!" message:@"Successfully connected to quadcopter"];
 }
 
 #pragma mark - Private
+
+-(void)showAlert:(NSString *)title message:(NSString *)message{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *action = [UIAlertAction actionWithTitle:@"Ok" style:UIAlertActionStyleCancel handler:nil];
+    [alert addAction:action];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (IBAction)quickConnect:(id)sender {
+    
+    self.manager = [[BLEManager alloc] init];
+    self.manager.delegate = self;
+}
 
 -(void)rightPan:(UIPanGestureRecognizer *)pan{
 
@@ -40,7 +54,8 @@
         CGPoint location = [pan locationInView:self.view];
         if (location.y < 95 || location.y > 220) {
             location.y = self.rightStick.center.y;
-        }else if (location.x < 355 || location.x > 490){
+        }
+        if (location.x < 355 || location.x > 490){
             location.x = self.rightStick.center.x;
         }
         self.rightStick.center = location;
@@ -58,7 +73,8 @@
         CGPoint location = [pan locationInView:self.view];
         if (location.y < 95 || location.y > 220) {
             location.y = self.leftStick.center.y;
-        }else if (location.x < 80 || location.x > 215){
+        }
+        if (location.x < 80 || location.x > 215){
             location.x = self.leftStick.center.x;
         }
         self.leftStick.center = location;
@@ -86,11 +102,6 @@
     self.rightStick.layer.cornerRadius = 5;
     self.leftStick.layer.masksToBounds = YES;
     self.rightStick.layer.masksToBounds = YES;
-    
-    self.manager = [[BLEManager alloc] init];
-    self.manager.delegate = self;
-    //[self.manager startScanning];
-    // Do any additional setup after loading the view, typically from a nib.
 }
 
 

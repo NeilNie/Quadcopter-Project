@@ -17,6 +17,7 @@
     if (self) {
         self.cm = [[CBCentralManager alloc] initWithDelegate:self queue:dispatch_queue_create("com.yongyang.controller.bluetooth", 0)];
         self.status = disconnected;
+        self.cm.delegate = self;
     }
     return self;
 }
@@ -41,7 +42,8 @@
 }
 
 -(void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error{
-    
+    self.status = disconnected;
+    [self.delegate didDisconnect:error];
 }
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral{
     
@@ -51,7 +53,8 @@
     }
 }
 -(void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error{
-    
+    self.status = disconnected;
+    [self.delegate didDisconnect:error];
 }
 -(void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI{
     
@@ -62,12 +65,20 @@
     }
 }
 
+#pragma mark - CBPeripheral delegate
+
+-(void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error{
+    
+    
+}
+
 -(void)connectToPeripheral:(CBPeripheral *)peripheral{
     
     [self.cm stopScan];
     NSLog(@"stopped scanning");
     [self.cm connectPeripheral:peripheral options:@{CBConnectPeripheralOptionNotifyOnDisconnectionKey: [NSNumber numberWithBool:YES]}];
     NSLog(@"begin connecting");
+    NSLog(@"%@", peripheral.name);
     self.connecting = peripheral;
 }
 
@@ -82,4 +93,7 @@
     [self.cm scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey: @YES}];
 }
 
+-(void)sendData:(int)channel data:(int8_t)data{
+    
+}
 @end

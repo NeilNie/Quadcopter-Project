@@ -18,7 +18,7 @@ enum ConnectionStatus{
     connecting
 };
 
-@interface BLEManager : NSObject <CBCentralManagerDelegate>
+@interface BLEManager : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
 
 @property (retain, nonatomic) id delegate;
 @property (strong, nonatomic) CBCentralManager *cm;
@@ -33,5 +33,6 @@ enum ConnectionStatus{
 
 -(void)BLEManagerFeedback:(NSString *)feedback;
 -(void)didConnectToPeripheral:(CBPeripheral *)peripheral;
+-(void)didDisconnect:(NSError *)error;
 
 @end
