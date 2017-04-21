@@ -16,17 +16,22 @@
 
 #pragma BLEManager Delegate
 
+- (IBAction)emergencyLanding:(id)sender {
+    [self.manager sendData:1 data:1200];
+}
+
 -(void)didDisconnect:(NSError *)error{
     [self showAlert:@"Fail to connect!" message:[NSString stringWithFormat:@"Fail to connect, error:%@", error.localizedDescription]];
 }
 
 -(void)BLEManagerFeedback:(NSString *)feedback{
-    NSLog(@"feedback");
+    NSLog(@"%@", feedback);
 }
 
 -(void)didConnectToPeripheral:(CBPeripheral *)peripheral{
     NSLog(@"connected: %@", peripheral.name);
     [self showAlert:@"Connected!" message:@"Successfully connected to quadcopter"];
+    [self.manager sendData:1 data:1200];
 }
 
 #pragma mark - Private

@@ -14,8 +14,8 @@ Adafruit_BluefruitLE_UART ble(bluefruitSS, BLUEFRUIT_UART_MODE_PIN,
 
 /**************************************************************************/
 /**************************************************************************/
-void setup(void){
-  
+void setup(void) {
+
   Serial.begin(115200);
   Serial.println(F("Adafruit Bluefruit Command Mode Example"));
   Serial.println(F("---------------------------------------"));
@@ -26,10 +26,10 @@ void setup(void){
   if ( !ble.begin(VERBOSE_MODE) )
   {
     Serial.println(F("Couldn't find Bluefruit, make sure it's in CoMmanD mode & check wiring?"));
-    while(1){}
+    while (1) {}
   }
   Serial.println( F("OK!") );
-  
+
   /* Disable command echo from Bluefruit */
   ble.echo(false);
 
@@ -51,12 +51,23 @@ void setup(void){
 
 /**************************************************************************/
 /**************************************************************************/
-void loop(void){
-  
-  Serial.println(getReceiverBuffer());
+void loop(void) {
+
+  int t = micros();
+
+  ble.println("AT+BLEUARTRX");
+  ble.readline();
+  if (strcmp(ble.buffer, "OK") != 0) {
+    // Some data was found, its in the buffer
+    Serial.println(ble.buffer);
+    ble.waitForOK();
+
+    int e = micros() - t;
+    Serial.println(e);
+  }
 }
 
-String getReceiverBuffer(){
+String getReceiverBuffer() {
 
   ble.println("AT+BLEUARTRX");
   ble.readline();

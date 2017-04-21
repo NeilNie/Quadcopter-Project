@@ -137,6 +137,9 @@
                                     <constraint firstAttribute="width" constant="75" id="yeN-aT-4Cq"/>
                                 </constraints>
                                 <state key="normal" backgroundImage="Brake Warning_000000_100.png"/>
+                                <connections>
+                                    <action selector="emergencyLanding:" destination="BYZ-38-t0r" eventType="touchUpInside" id="1cU-FY-cB1"/>
+                                </connections>
                             </button>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Expand Arrow_000000_100 2.png" translatesAutoresizingMaskIntoConstraints="NO" id="IS0-bT-L9T">
                                 <rect key="frame" x="123" y="242" width="45" height="45"/>
@@ -165,6 +168,7 @@
                             <constraint firstItem="dNJ-66-XCg" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="Dal-AD-Z0C"/>
                             <constraint firstItem="fId-N2-5y0" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="FIA-0s-R40"/>
                             <constraint firstItem="ZAe-ty-avl" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="25" id="Glg-0d-M3E"/>
+                            <constraint firstItem="nOR-tO-ygh" firstAttribute="top" secondItem="ZAe-ty-avl" secondAttribute="top" id="KyA-Sd-6iu"/>
                             <constraint firstItem="nOR-tO-ygh" firstAttribute="centerX" secondItem="AKq-4m-nnC" secondAttribute="centerX" id="MRy-9N-Kaf"/>
                             <constraint firstItem="Hhz-GN-pz9" firstAttribute="top" secondItem="eSw-jy-mI4" secondAttribute="bottom" constant="31" id="Mgc-S6-GSL"/>
                             <constraint firstItem="56D-v4-OCZ" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="NcM-L1-HGP"/>
@@ -175,7 +179,6 @@
                             <constraint firstItem="v3Z-vk-oNh" firstAttribute="trailing" secondItem="8bC-Xf-vdC" secondAttribute="trailingMargin" id="aVs-Eh-L3E"/>
                             <constraint firstItem="MX3-46-xQm" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="bPM-DD-cNK"/>
                             <constraint firstItem="dNJ-66-XCg" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="dND-by-BVj"/>
-                            <constraint firstItem="nOR-tO-ygh" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="67" id="f6W-fG-8ZU"/>
                             <constraint firstItem="67g-dj-S7a" firstAttribute="centerX" secondItem="eSw-jy-mI4" secondAttribute="centerX" id="ghb-0I-W9c"/>
                             <constraint firstItem="eSw-jy-mI4" firstAttribute="leading" secondItem="8kh-kp-OIP" secondAttribute="trailing" constant="31" id="gqW-2z-aoC"/>
                             <constraint firstItem="eSw-jy-mI4" firstAttribute="centerX" secondItem="ra8-V7-Pcq" secondAttribute="centerX" id="gsB-7G-Mop"/>

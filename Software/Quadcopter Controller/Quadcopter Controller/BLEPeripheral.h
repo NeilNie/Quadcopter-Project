@@ -7,7 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <CoreBluetooth/CoreBluetooth.h>
 
-@interface BLEPeripheral : NSObject
+@interface BLEPeripheral : NSObject <CBPeripheralDelegate>
+
+@property (strong, nonatomic) CBPeripheral *peripheral;
+@property (strong, nonatomic) CBCharacteristic *characteristic;
 
 @end

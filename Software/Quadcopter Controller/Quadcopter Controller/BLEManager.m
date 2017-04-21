@@ -44,18 +44,25 @@
 -(void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error{
     self.status = disconnected;
     [self.delegate didDisconnect:error];
+    self.peripheral = nil;
 }
+
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral{
     
     if ([peripheral.identifier.UUIDString isEqualToString:@"D7AC59DF-3F15-45CB-AEBC-1B19199EBD22"]) {
         self.status = connected;
         [self.delegate didConnectToPeripheral:peripheral];
+        self.peripheral.delegate = self;
+        [self.peripheral discoverServices:nil];
     }
 }
+
 -(void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error{
     self.status = disconnected;
+    self.peripheral = nil;
     [self.delegate didDisconnect:error];
 }
+
 -(void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary<NSString *,id> *)advertisementData RSSI:(NSNumber *)RSSI{
     
     if ([peripheral.identifier.UUIDString isEqualToString:@"D7AC59DF-3F15-45CB-AEBC-1B19199EBD22"] && self.status == disconnected) {
@@ -69,8 +76,35 @@
 
 -(void)peripheral:(CBPeripheral *)peripheral didDiscoverCharacteristicsForService:(CBService *)service error:(NSError *)error{
     
-    
+    for (CBCharacteristic *characteristic in [service characteristics]) {
+        if ([[characteristic UUID].UUIDString isEqualToString:@"6E400002-B5A3-F393-E0A9-E50E24DCCA9E"]) {
+            self.characteristic = characteristic;
+            [self.delegate BLEManagerFeedback:@"characteristic discovered"];
+        }
+    }
 }
+
+- (void)peripheral:(CBPeripheral *)peripheral didDiscoverServices:(NSError *)error {
+    
+    if (error) {
+        NSLog(@"Error %@\n", error);
+        return;
+    }
+    
+    NSArray *services = [peripheral services];
+    if (services.count == 0) {
+        NSLog(@"No Services");
+        return;
+    }
+    
+    for (CBService *service in services) {
+        if ([[service UUID].UUIDString isEqualToString:@"6E400001-B5A3-F393-E0A9-E50E24DCCA9E"]) {
+            [self.peripheral discoverCharacteristics:nil forService:service];
+        }
+    }
+}
+
+#pragma mark - Private
 
 -(void)connectToPeripheral:(CBPeripheral *)peripheral{
     
@@ -79,7 +113,7 @@
     [self.cm connectPeripheral:peripheral options:@{CBConnectPeripheralOptionNotifyOnDisconnectionKey: [NSNumber numberWithBool:YES]}];
     NSLog(@"begin connecting");
     NSLog(@"%@", peripheral.name);
-    self.connecting = peripheral;
+    self.peripheral = peripheral;
 }
 
 -(void)startScanning{
@@ -93,7 +127,17 @@
     [self.cm scanForPeripheralsWithServices:nil options:@{CBCentralManagerScanOptionAllowDuplicatesKey: @YES}];
 }
 
--(void)sendData:(int)channel data:(int8_t)data{
+-(void)sendData:(UInt16)channel data:(UInt16)position{
+    
+    UInt16 i = channel * 10000 + position;
+    NSData *data = nil;
+    data = [NSData dataWithBytes:&i length:sizeof(i)];
+    if (self.characteristic) {
+        [self.peripheral writeValue:data forCharacteristic:self.characteristic type:CBCharacteristicWriteWithResponse];
+    }else{
+        [self.delegate BLEManagerFeedback:@"no characteristic"];
+    }
     
 }
+
 @end
