@@ -20,10 +20,7 @@ int PID_MAX = 400;                     //Maximum output of the PID-controller (+
 //Declaring Variables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 byte last_channel_1, last_channel_2, last_channel_3, last_channel_4;
-int receiver_input_channel_1;
-int receiver_input_channel_2;
-int receiver_input_channel_3;
-int receiver_input_channel_4;
+int receiver_input_channel_1, receiver_input_channel_2, receiver_input_channel_3, receiver_input_channel_4;
 
 int counter_channel_1, counter_channel_2, counter_channel_3, counter_channel_4, loop_counter;
 int esc_1, esc_2, esc_3, esc_4;
@@ -34,9 +31,10 @@ int cal_int, start;
 unsigned long loop_timer;
 double gyro_pitch, gyro_roll, gyro_yaw;
 double gyro_roll_cal, gyro_pitch_cal, gyro_yaw_cal;
-byte highByte, lowByte;
-bool buttonDown;
 float pid_error_temp;
+int gyro_x, gyro_y, gyro_z;
+long acc_x, acc_y, acc_z, acc_total_vector;
+int temperature;
 float pid_i_mem_roll, pid_roll_setpoint, gyro_roll_input, pid_output_roll, pid_last_roll_d_error;
 float pid_i_mem_pitch, pid_pitch_setpoint, gyro_pitch_input, pid_output_pitch, pid_last_pitch_d_error;
 float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_yaw_d_error;
@@ -46,26 +44,17 @@ float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
 
-  Wire.begin();                                                //Start the I2C as master.
+  Serial.begin(9600);
+  pinMode(3, INPUT);
 
   DDRD |= B11110000;                                           //Configure digital poort 4, 5, 6 and 7 as output.
   DDRB |= B00110000;                                           //Configure digital poort 12 and 13 as output.
-  //Arduino (Atmega) pins default to inputs, so they don't need to be explicitly declared as inputs.
 
-  //Use the led on the Arduino for startup indication
   digitalWrite(12, HIGH);                                      //Turn on the warning led.
   delay(3000);                                                 //Wait 2 second befor continuing.
 
-  Wire.beginTransmission(105);                                 //Start communication with the gyro (adress 1101001)
-  Wire.write(0x20);                                            //We want to write to register 1 (20 hex)
-  Wire.write(0x0F);                                            //Set the register bits as 00001111 (Turn on the gyro and enable all axis)
-  Wire.endTransmission();                                      //End the transmission with the gyro
-
-  Wire.beginTransmission(105);                                 //Start communication with the gyro (adress 1101001)
-  Wire.write(0x23);                                            //We want to write to register 4 (23 hex)
-  Wire.write(0x90);                                            //Set the register bits as 10010000 (Block Data Update active & 500dps full scale)
-  Wire.endTransmission();                                      //End the transmission with the gyro
-
+  Wire.begin();
+  setup_mpu_6050_registers();
   delay(250);                                                  //Give the gyro time to start.
 
   //Let's take multiple gyro data samples so we can determine the average gyro offset (calibration).
@@ -109,12 +98,14 @@ void setup() {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop() {
 
-  if (buttonDown) {
+  if (digitalRead(3) == HIGH) {
     receiver_input_channel_1 = 1200;
     receiver_input_channel_2 = 1200;
     receiver_input_channel_3 = 1200;
     receiver_input_channel_4 = 1200;
+    Serial.println("High");
   }
+  Serial.println("Low");
 
   //Let's get the current gyro data and scale it to degrees per second for the pid calculations.
   gyro_signalen();
@@ -209,28 +200,60 @@ void loop() {
 //Subroutine for reading the gyro
 //*************************************************************************************************************************************
 void gyro_signalen() {
-  Wire.beginTransmission(105);                                 //Start communication with the gyro (adress 1101001)
-  Wire.write(168);                                             //Start reading @ register 28h and auto increment with every read
-  Wire.endTransmission();                                      //End the transmission
-  Wire.requestFrom(105, 6);                                    //Request 6 bytes from the gyro
-  while (Wire.available() < 6);                                //Wait until the 6 bytes are received
-  lowByte = Wire.read();                                       //First received byte is the low part of the angular data
-  highByte = Wire.read();                                      //Second received byte is the high part of the angular data
-  gyro_roll = ((highByte << 8) | lowByte);                     //Multiply highByte by 256 (shift left by 8) and ad lowByte
-  if (cal_int == 2000)
-    gyro_roll -= gyro_roll_cal;              //Only compensate after the calibration
-  lowByte = Wire.read();                                       //First received byte is the low part of the angular data
-  highByte = Wire.read();                                      //Second received byte is the high part of the angular data
-  gyro_pitch = ((highByte << 8) | lowByte);                    //Multiply highByte by 256 (shift left by 8) and ad lowByte
-  gyro_pitch *= -1;                                            //Invert axis
-  if (cal_int == 2000)
-    gyro_pitch -= gyro_pitch_cal;            //Only compensate after the calibration
-  lowByte = Wire.read();                                       //First received byte is the low part of the angular data
-  highByte = Wire.read();                                      //Second received byte is the high part of the angular data
-  gyro_yaw = ((highByte << 8) | lowByte);                      //Multiply highByte by 256 (shift left by 8) and ad lowByte
-  gyro_yaw *= -1;                                              //Invert axis
-  if (cal_int == 2000)
-    gyro_yaw -= gyro_yaw_cal;                //Only compensate after the calibration
+
+  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
+  Wire.write(0x3B);                                                    //Send the requested starting register
+  Wire.endTransmission();                                              //End the transmission
+  Wire.requestFrom(0x68, 14);                                          //Request 14 bytes from the MPU-6050
+  while (Wire.available() < 14);                                       //Wait until all the bytes are received
+  acc_x = Wire.read() << 8 | Wire.read();                              //Add the low and high byte to the acc_x variable
+  acc_y = Wire.read() << 8 | Wire.read();                              //Add the low and high byte to the acc_y variable
+  acc_z = Wire.read() << 8 | Wire.read();                              //Add the low and high byte to the acc_z variable
+  Wire.read() << 8 | Wire.read();                        //Add the low and high byte to the temperature variable
+  gyro_x = Wire.read() << 8 | Wire.read();                             //Add the low and high byte to the gyro_x variable
+  gyro_y = Wire.read() << 8 | Wire.read();                             //Add the low and high byte to the gyro_y variable
+  gyro_z = Wire.read() << 8 | Wire.read();                             //Add the low and high byte to the gyro_z variable
+}
+
+void gyro_calculation() {
+
+  gyro_x -= gyro_roll_cal;                                                //Subtract the offset calibration value from the raw gyro_x value
+  gyro_y -= gyro_pitch_cal;                                                //Subtract the offset calibration value from the raw gyro_y value
+  gyro_z -= gyro_yaw_cal;                                                //Subtract the offset calibration value from the raw gyro_z value
+
+  //Gyro angle calculations
+  //0.0000611 = 1 / (250Hz / 65.5)
+  angle_pitch += gyro_x * 0.0000611;                                   //Calculate the traveled pitch angle and add this to the angle_pitch variable
+  angle_roll += gyro_y * 0.0000611;                                    //Calculate the traveled roll angle and add this to the angle_roll variable
+
+  //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
+  angle_pitch += angle_roll * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the roll angle to the pitch angel
+  angle_roll -= angle_pitch * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the pitch angle to the roll angel
+
+  //Accelerometer angle calculations
+  acc_total_vector = sqrt((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z)); //Calculate the total accelerometer vector
+  //57.296 = 1 / (3.142 / 180) The Arduino asin function is in radians
+  angle_pitch_acc = asin((float)acc_y / acc_total_vector) * 57.296;    //Calculate the pitch angle
+  angle_roll_acc = asin((float)acc_x / acc_total_vector) * -57.296;    //Calculate the roll angle
+
+  //Place the MPU-6050 spirit level and note the values in the following two lines for calibration
+  angle_pitch_acc -= 0.0;                                              //Accelerometer calibration value for pitch
+  angle_roll_acc -= 0.0;                                               //Accelerometer calibration value for roll
+
+  if (set_gyro_angles) {                                               //If the IMU is already started
+    angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;     //Correct the drift of the gyro pitch angle with the accelerometer pitch angle
+    angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;        //Correct the drift of the gyro roll angle with the accelerometer roll angle
+  }
+  else {                                                               //At first start
+    angle_pitch = angle_pitch_acc;                                     //Set the gyro pitch angle equal to the accelerometer pitch angle
+    angle_roll = angle_roll_acc;                                       //Set the gyro roll angle equal to the accelerometer roll angle
+    set_gyro_angles = true;                                            //Set the IMU started flag
+  }
+
+  //To dampen the pitch and roll angles a complementary filter is used
+  angle_pitch_output = angle_pitch_output * 0.9 + angle_pitch * 0.1;   //Take 90% of the output pitch value and add 10% of the raw pitch value
+  angle_roll_output = angle_roll_output * 0.9 + angle_roll * 0.1;      //Take 90% of the output roll value and add 10% of the raw roll value
+
 }
 
 //*************************************************************************************************************************************
@@ -287,6 +310,24 @@ void calculate_pid() {
     pid_output_yaw = PID_MAX * -1;
 
   pid_last_yaw_d_error = pid_error_temp;
+}
+
+void setup_mpu_6050_registers() {
+  //Activate the MPU-6050
+  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
+  Wire.write(0x6B);                                                    //Send the requested starting register
+  Wire.write(0x00);                                                    //Set the requested starting register
+  Wire.endTransmission();                                              //End the transmission
+  //Configure the accelerometer (+/-8g)
+  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
+  Wire.write(0x1C);                                                    //Send the requested starting register
+  Wire.write(0x10);                                                    //Set the requested starting register
+  Wire.endTransmission();                                              //End the transmission
+  //Configure the gyro (500dps full scale)
+  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
+  Wire.write(0x1B);                                                    //Send the requested starting register
+  Wire.write(0x08);                                                    //Set the requested starting register
+  Wire.endTransmission();                                              //End the transmission
 }
 
 
