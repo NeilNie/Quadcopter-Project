@@ -40,7 +40,7 @@ ISR(PCINT0_vect){
   }
   else if(last_channel_2 == 1 && !(PINB & B00000010)){  //Input 9 changed from 1 to 0
     last_channel_2 = 0;                                 //Remember current input state
-    receiver_input_channel_2 = micros() - timer_2 - 500;      //Channel 2 is micros() - timer_2
+    receiver_input_channel_2 = micros() - timer_2;      //Channel 2 is micros() - timer_2
   }
   //Channel 3=========================================
   if(last_channel_3 == 0 && PINB & B00000100 ){         //Input 10 changed from 0 to 1
@@ -49,7 +49,7 @@ ISR(PCINT0_vect){
   }
   else if(last_channel_3 == 1 && !(PINB & B00000100)){  //Input 10 changed from 1 to 0
     last_channel_3 = 0;                                 //Remember current input state
-    receiver_input_channel_3 = micros() - timer_3;      //Channel 3 is micros() - timer_3
+    receiver_input_channel_3 = micros() - timer_3 - 500;      //Channel 3 is micros() - timer_3
   }
   //Channel 4=========================================
   if(last_channel_4 == 0 && PINB & B00001000 ){         //Input 11 changed from 0 to 1

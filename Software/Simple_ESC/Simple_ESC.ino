@@ -28,17 +28,17 @@ void loop() {
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
   if (buttonState == HIGH)
-    receiver_input_channel_2 = 1250;
+    receiver_input_channel_2 = 1100;
   else
     receiver_input_channel_2 = 1000;
-
+receiver_input_channel_2 = 1200;
   while (zero_timer + 4000 > micros());                      //Start the pulse after 4000 micro seconds.
   zero_timer = micros();                                     //Reset the zero timer.
   PORTD |= B11110000; //Set digital outputs 4,5,6 and 7 high.
   timer_channel_1 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 4 is set low.
-  timer_channel_2 = receiver_input_channel_2 + zero_timer - 10;   //Calculate the time when digital port 5 is set low.
+  timer_channel_2 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 5 is set low.
   timer_channel_3 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 6 is set low.
-  timer_channel_4 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 7 is set low.
+  //timer_channel_4 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 7 is set low.
 
   while (PORTD >= 16) {                                      //Execute the loop until digital port 8 til 11 is low.
     esc_loop_timer = micros();                               //Check the current time.
