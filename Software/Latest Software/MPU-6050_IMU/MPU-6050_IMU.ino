@@ -65,9 +65,6 @@ void setup() {
 
   digitalWrite(13, HIGH);                                              //Set digital output 13 high to indicate startup
 
-  lcd.begin();                                                         //Initialize the LCD
-  lcd.backlight();                                                     //Activate backlight
-  lcd.clear();                                                         //Clear the LCD
 
   lcd.setCursor(0,0);                                                  //Set the LCD cursor to position to position 0,0
   lcd.print("  MPU-6050 IMU");                                         //Print text to screen

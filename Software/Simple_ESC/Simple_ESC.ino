@@ -38,7 +38,7 @@ receiver_input_channel_2 = 1200;
   timer_channel_1 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 4 is set low.
   timer_channel_2 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 5 is set low.
   timer_channel_3 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 6 is set low.
-  //timer_channel_4 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 7 is set low.
+  timer_channel_4 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 7 is set low.
 
   while (PORTD >= 16) {                                      //Execute the loop until digital port 8 til 11 is low.
     esc_loop_timer = micros();                               //Check the current time.
