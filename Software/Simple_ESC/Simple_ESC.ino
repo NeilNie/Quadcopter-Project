@@ -27,8 +27,10 @@ void loop() {
 
   // check if the pushbutton is pressed.
   // if it is, the buttonState is HIGH:
-  if (buttonState == HIGH)
+  if (buttonState == HIGH){
     receiver_input_channel_2 = 1100;
+    Serial.println("H");
+  }
   else
     receiver_input_channel_2 = 1000;
 receiver_input_channel_2 = 1200;
