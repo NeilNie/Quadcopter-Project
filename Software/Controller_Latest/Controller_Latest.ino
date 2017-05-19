@@ -28,7 +28,6 @@ unsigned long loop_timer;
 int throttle, battery_voltage;
 int gyro_x, gyro_y, gyro_z;
 long acc_x, acc_y, acc_z, acc_total_vector;
-int temperature;
 long gyro_x_cal, gyro_y_cal, gyro_z_cal;
 int lcd_loop_counter;
 float angle_pitch, angle_roll;
@@ -42,16 +41,16 @@ byte last_channel_1, last_channel_2, last_channel_3, last_channel_4;
 volatile int receiver_input_channel_1, receiver_input_channel_2, receiver_input_channel_3, receiver_input_channel_4;
 int counter_channel_1, counter_channel_2, counter_channel_3, counter_channel_4, loop_counter;
 int esc_1, esc_2, esc_3, esc_4;
-int cal_int;
 float pid_i_mem_roll, pid_roll_setpoint, gyro_roll_input, pid_output_roll, pid_last_roll_d_error;
 float pid_i_mem_pitch, pid_pitch_setpoint, gyro_pitch_input, pid_output_pitch, pid_last_pitch_d_error;
 float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_yaw_d_error;
+int start;
 
 //Initialize the LCD library
 LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 void setup() {
-
+  
   PCICR |= (1 << PCIE0);                             // set PCIE0 to enable PCMSK0 scan
   PCMSK0 |= (1 << PCINT0);                           // set PCINT0 (digital input 8) to trigger an interrupt on state change
   PCMSK0 |= (1 << PCINT1);                           // set PCINT1 (digital input 9)to trigger an interrupt on state change
@@ -105,29 +104,15 @@ void setup() {
 
   digitalWrite(13, LOW);                                               //All done, turn the LED off
 
-  //Load the battery voltage to the battery_voltage variable.
-  //65 is the voltage compensation for the diode.
-  //12.6V equals ~5V @ Analog 0.
-  //12.6V equals 1023 analogRead(0).
-  //1260 / 1023 = 1.2317.
-  //The variable battery_voltage holds 1050 if the battery voltage is 10.5V.
   battery_voltage = (analogRead(0) + 65) * 1.2317;
   lcd.clear();
-
   resetPID();
   delay(50);
+  start = 0;
   loop_timer = micros();
 }
 
 void loop() {
-
-  if(receiver_input_channel_2 < 1000)
-  if(receiver_input_channel_2)
-  receiver_input_channel_2 = 1000;
-  receiver_input_channel_1 = receiver_input_channel_2;
-  receiver_input_channel_2 = receiver_input_channel_2;
-  receiver_input_channel_3 = receiver_input_channel_2;
-  receiver_input_channel_4 = receiver_input_channel_2;
 
   read_mpu_6050_data();
 
@@ -142,6 +127,34 @@ void loop() {
 
   calculate_angle();
 
+  if (start == 0) {
+    if (receiver_input_channel_2 < 500)
+      start = 1; delay(10);
+  }
+  if (start == 1) {
+    if (receiver_input_channel_2 < 500)
+      start = 0; delay(10);
+  }
+
+  //channel 1 --> roll
+  //channel 2 --> throttle
+  //channel 3 --> pitch
+  //channel 4 --> yaw
+
+  //The PID set point in degrees per second is determined by the roll receiver input.
+  //In the case of dividing by 3 the max roll rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
+  pid_roll_setpoint = 0;
+  if (receiver_input_channel_1 > 1508) pid_roll_setpoint = (receiver_input_channel_1 - 1508) / 3.0;
+  else if (receiver_input_channel_1 < 1492) pid_roll_setpoint = (receiver_input_channel_1 - 1492) / 3.0;
+
+  pid_pitch_setpoint = 0;
+  if (receiver_input_channel_3 > 1508) pid_pitch_setpoint = (receiver_input_channel_3 - 1508) / 3.0;
+  else if (receiver_input_channel_3 < 1492) pid_pitch_setpoint = (receiver_input_channel_3 - 1492) / 3.0;
+
+  pid_yaw_setpoint = 0;
+  if (receiver_input_channel_4 > 1508) pid_yaw_setpoint = (receiver_input_channel_4 - 1508) / 3.0;
+  else if (receiver_input_channel_4 < 1492) pid_yaw_setpoint = (receiver_input_channel_4 - 1492) / 3.0;
+  
   //---------------------------------------------------------------------------------------
   calculate_pid();
   //---------------------------------------------------------------------------------------
@@ -154,38 +167,47 @@ void loop() {
   //Turn on the led if battery voltage is to low.
   if (battery_voltage < 1050 && battery_voltage > 600) digitalWrite(2, HIGH);
 
-  //////////////////////////////////////////////////////////////////////////////////////////////
-  throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
-  if (throttle > 1800) throttle = 1800;
+  if (start == 1) {
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
+    if (throttle > 1800) throttle = 1800;
 
-  esc_1 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
-  esc_2 = throttle - pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
-  esc_3 = throttle + pid_output_pitch - pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 3 (rear-left - CCW)
-  esc_4 = throttle + pid_output_pitch + pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 4 (front-left - CW)
+    esc_1 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
+    esc_2 = throttle - pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
+    esc_3 = throttle + pid_output_pitch - pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 3 (rear-left - CCW)
+    esc_4 = throttle + pid_output_pitch + pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 4 (front-left - CW)
 
-    if (battery_voltage < 1240 && battery_voltage > 800){                   //Is the battery connected?
-      esc_1 += esc_1 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-1 pulse for voltage drop.
-      esc_2 += esc_2 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-2 pulse for voltage drop.
-      esc_3 += esc_3 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-3 pulse for voltage drop.
-      esc_4 += esc_4 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-4 pulse for voltage drop.
-    } 
+    if (battery_voltage < 1240 && battery_voltage > 800) {                  //Is the battery connected?
+      esc_1 += esc_1 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-1 pulse for voltage drop.
+      esc_2 += esc_2 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-2 pulse for voltage drop.
+      esc_3 += esc_3 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-3 pulse for voltage drop.
+      esc_4 += esc_4 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-4 pulse for voltage drop.
+    }
 
-  if (esc_1 < 1200) esc_1 = 1200;                                         //Keep the motors running.
-  if (esc_2 < 1200) esc_2 = 1200;                                         //Keep the motors running.
-  if (esc_3 < 1200) esc_3 = 1200;                                         //Keep the motors running.
-  if (esc_4 < 1200) esc_4 = 1200;                                        //Keep the motors running.
+    if (esc_1 < 1200) esc_1 = 1200;                                         //Keep the motors running.
+    if (esc_2 < 1200) esc_2 = 1200;                                         //Keep the motors running.
+    if (esc_3 < 1200) esc_3 = 1200;                                         //Keep the motors running.
+    if (esc_4 < 1200) esc_4 = 1200;                                        //Keep the motors running.
 
-  if (esc_1 > 1600) esc_1 = 1600;                                          //Limit the esc-1 pulse to 2000us.
-  if (esc_2 > 1600) esc_2 = 1600;                                          //Limit the esc-2 pulse to 2000us.
-  if (esc_3 > 1600) esc_3 = 1600;                                          //Limit the esc-3 pulse to 2000us.
-  if (esc_4 > 1600) esc_4 = 1600;
+    if (esc_1 > 1600) esc_1 = 1600;                                          //Limit the esc-1 pulse to 2000us.
+    if (esc_2 > 1600) esc_2 = 1600;                                          //Limit the esc-2 pulse to 2000us.
+    if (esc_3 > 1600) esc_3 = 1600;                                          //Limit the esc-3 pulse to 2000us.
+    if (esc_4 > 1600) esc_4 = 1600;
 
-  //---------------------------------------------------------------------------------------
-  write_LCD();
+    //---------------------------------------------------------------------------------------
+    write_LCD();
+  }
+  else {
+    esc_1 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-1.
+    esc_2 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-2.
+    esc_3 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-3.
+    esc_4 = 1000;
+  }
+
 
   //All the information for controlling the motor's is available.
   //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
-  while(micros() - loop_timer < 4000);                                      //We wait until 4000us are passed.
+  while (micros() - loop_timer < 4000);                                     //We wait until 4000us are passed.
   loop_timer = micros();                                                    //Set the timer for the next loop.
 
   PORTD |= B11110000;                                                       //Set digital outputs 4,5,6 and 7 high.
@@ -193,13 +215,13 @@ void loop() {
   timer_channel_2 = esc_2 + loop_timer;                                     //Calculate the time of the faling edge of the esc-2 pulse.
   timer_channel_3 = esc_3 + loop_timer;                                     //Calculate the time of the faling edge of the esc-3 pulse.
   timer_channel_4 = esc_4 + loop_timer;                                     //Calculate the time of the faling edge of the esc-4 pulse.
-  
-  while(PORTD >= 16){                                                       //Stay in this loop until output 4,5,6 and 7 are low.
+
+  while (PORTD >= 16) {                                                     //Stay in this loop until output 4,5,6 and 7 are low.
     esc_loop_timer = micros();                                              //Read the current time.
-    if(timer_channel_1 <= esc_loop_timer)PORTD &= B11101111;                //Set digital output 4 to low if the time is expired.
-    if(timer_channel_2 <= esc_loop_timer)PORTD &= B11011111;                //Set digital output 5 to low if the time is expired.
-    if(timer_channel_3 <= esc_loop_timer)PORTD &= B10111111;                //Set digital output 6 to low if the time is expired.
-    if(timer_channel_4 <= esc_loop_timer)PORTD &= B01111111;                //Set digital output 7 to low if the time is expired.
+    if (timer_channel_1 <= esc_loop_timer)PORTD &= B11101111;               //Set digital output 4 to low if the time is expired.
+    if (timer_channel_2 <= esc_loop_timer)PORTD &= B11011111;               //Set digital output 5 to low if the time is expired.
+    if (timer_channel_3 <= esc_loop_timer)PORTD &= B10111111;               //Set digital output 6 to low if the time is expired.
+    if (timer_channel_4 <= esc_loop_timer)PORTD &= B01111111;               //Set digital output 7 to low if the time is expired.
   }
 }
 
@@ -258,7 +280,7 @@ ISR(PCINT0_vect) {
   }
   else if (last_channel_3 == 1 && !(PINB & B00000100)) {
     last_channel_3 = 0;
-    receiver_input_channel_3 = micros() - timer_3 - 500;
+    receiver_input_channel_3 = micros() - timer_3;
   }
   //Channel 4=========================================
   if (last_channel_4 == 0 && PINB & B00001000 ) {
@@ -293,11 +315,11 @@ void write_LCD() {                                                     //Subrout
   if (lcd_loop_counter == 14)lcd_loop_counter = 0;                     //Reset the counter after 14 characters
   lcd_loop_counter ++;                                                 //Increase the counter
   if (lcd_loop_counter == 1) {
-    angle_pitch_buffer = esc_2 * 10;                      //Buffer the pitch angle because it will change
+    angle_pitch_buffer = pid_roll_setpoint * 10;                      //Buffer the pitch angle because it will change
     lcd.setCursor(6, 0);                                               //Set the LCD cursor to position to position 0,0
   }
   if (lcd_loop_counter == 2) {
-    if (pid_output_pitch < 0)lcd.print("-");                         //Print - if value is negative
+    if (pid_roll_setpoint < 0)lcd.print("-");                         //Print - if value is negative
     else lcd.print("+");                                               //Print + if value is negative
   }
   if (lcd_loop_counter == 3)lcd.print(abs(angle_pitch_buffer) / 1000); //Print first number
@@ -307,11 +329,11 @@ void write_LCD() {                                                     //Subrout
   if (lcd_loop_counter == 7)lcd.print(abs(angle_pitch_buffer) % 10);   //Print decimal number
 
   if (lcd_loop_counter == 8) {
-    angle_roll_buffer = esc_4 * 10;
+    angle_roll_buffer = pid_pitch_setpoint * 10;
     lcd.setCursor(6, 1);
   }
   if (lcd_loop_counter == 9) {
-    if (pid_output_roll < 0)lcd.print("-");                          //Print - if value is negative
+    if (pid_pitch_setpoint < 0)lcd.print("-");                          //Print - if value is negative
     else lcd.print("+");                                               //Print + if value is negative
   }
   if (lcd_loop_counter == 10)lcd.print(abs(angle_roll_buffer) / 1000);
