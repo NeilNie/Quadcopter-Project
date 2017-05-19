@@ -57,6 +57,7 @@ void loop() {
     if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111; //When the delay time is expired, digital port 6 is set low.
     if (timer_channel_4 <= esc_loop_timer) PORTD &= B01111111; //When the delay time is expired, digital port 7 is set low.
   }
+  print_signals();
 }
 
 //This routine is called every time input 8, 9, 10 or 11 changed state

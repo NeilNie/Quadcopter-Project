@@ -52,6 +52,12 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 void setup() {
 
+  PCICR |= (1 << PCIE0);                             // set PCIE0 to enable PCMSK0 scan
+  PCMSK0 |= (1 << PCINT0);                           // set PCINT0 (digital input 8) to trigger an interrupt on state change
+  PCMSK0 |= (1 << PCINT1);                           // set PCINT1 (digital input 9)to trigger an interrupt on state change
+  PCMSK0 |= (1 << PCINT2);                           // set PCINT2 (digital input 10)to trigger an interrupt on state change
+  PCMSK0 |= (1 << PCINT3);                           // set PCINT3 (digital input 11)to trigger an interrupt on state change
+
   lcd.begin();
   lcd.backlight();
   lcd.clear();
@@ -115,10 +121,13 @@ void setup() {
 
 void loop() {
 
-  receiver_input_channel_1 = 1350;
-  receiver_input_channel_2 = 1350;
-  receiver_input_channel_3 = 1350;
-  receiver_input_channel_4 = 1350;
+  if(receiver_input_channel_2 < 1000)
+  if(receiver_input_channel_2)
+  receiver_input_channel_2 = 1000;
+  receiver_input_channel_1 = receiver_input_channel_2;
+  receiver_input_channel_2 = receiver_input_channel_2;
+  receiver_input_channel_3 = receiver_input_channel_2;
+  receiver_input_channel_4 = receiver_input_channel_2;
 
   read_mpu_6050_data();
 
@@ -240,7 +249,7 @@ ISR(PCINT0_vect) {
   }
   else if (last_channel_2 == 1 && !(PINB & B00000010)) {
     last_channel_2 = 0;
-    receiver_input_channel_2 = micros() - timer_2;
+    receiver_input_channel_2 = micros() - timer_2 - 500;
   }
   //Channel 3=========================================
   if (last_channel_3 == 0 && PINB & B00000100 ) {
