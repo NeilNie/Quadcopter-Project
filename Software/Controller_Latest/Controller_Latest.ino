@@ -1,9 +1,3 @@
-///////////////////////////////////////////////////////////////////////////////////////
-/*
-  Website: http://www.brokking.net/imu.html
-  Youtube: https://youtu.be/4BoIE8YQwM8
-  Latest
-*//////////////////////////////////////////////////////////////////////////////////////
 
 //Include LCD and I2C library
 #include <LiquidCrystal_I2C.h>
@@ -12,20 +6,20 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PID gain and limit settings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-float pid_p_gain_roll = 1.3;               //Gain setting for the roll P-controller
-float pid_i_gain_roll = 0.04;              //Gain setting for the roll I-controller
-float pid_d_gain_roll = 18.0;              //Gain setting for the roll D-controller
-int PID_MAX_ROLL = 400;                    //Maximum output of the PID-controller (+/-)
+float pid_p_gain_roll = 1.3;               //Gain setting for the roll P-controller (1.3)
+float pid_i_gain_roll = 0.03;              //Gain setting for the roll I-controller (0.3)
+float pid_d_gain_roll = 12;                //Gain setting for the roll D-controller (15)
+int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-)
 
 float pid_p_gain_pitch = pid_p_gain_roll;  //Gain setting for the pitch P-controller.
 float pid_i_gain_pitch = pid_i_gain_roll;  //Gain setting for the pitch I-controller.
 float pid_d_gain_pitch = pid_d_gain_roll;  //Gain setting for the pitch D-controller.
-int PID_MAX_PITCH = PID_MAX_ROLL;          //Maximum output of the PID-controller (+/-)
+int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-)
 
 float pid_p_gain_yaw = 4.0;                //Gain setting for the pitch P-controller. //4.0
 float pid_i_gain_yaw = 0.02;               //Gain setting for the pitch I-controller. //0.02
 float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller.
-int PID_MAX_YAW = 400;                     //Maximum output of the PID-controller (+/-)
+int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-)
 
 //Declaring some global variables
 unsigned long timer_channel_1, timer_channel_2, timer_channel_3, timer_channel_4, esc_timer, esc_loop_timer;
@@ -58,40 +52,39 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 void setup() {
 
-  lcd.begin();                                                         //Initialize the LCD
-  lcd.backlight();                                                     //Activate backlight
-  lcd.clear();                                                         //Clear the LCD                                                      //Initialize the LCD                                                       //Clear the LCD
-
-  lcd.setCursor(0, 0);                                                 //Set the LCD cursor to position to position 0,0
-  lcd.print("     *FC*  ");                                         //Print text to screen
-  lcd.setCursor(0, 1);                                                 //Set the LCD cursor to position to position 0,1
-  lcd.print(" Neil Nie V1.1");                                              //Print text to screen
+  lcd.begin();
+  lcd.backlight();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("     *FC*  ");
+  lcd.setCursor(0, 1);
+  lcd.print("   Neil Nie");
+  delay(1000);
+  lcd.clear();
 
   DDRD |= B11110000;                                                        //Configure digital poort 4, 5, 6 and 7 as output.
   DDRB |= B00110000;                                                        //Configure digital poort 12 and 13 as output.
 
   Wire.begin();                                                        //Start I2C as master
-  Serial.begin(9600);                                               //Use only for debugging
-  pinMode(13, OUTPUT);                                                 //Set output 13 (LED) as output
-  pinMode(2, INPUT);
+  TWBR = 12;
   setup_mpu_6050_registers();                                          //Setup the registers of the MPU-6050 (500dfs / +/-8g) and start the gyro
 
-  delay(1000);                                                         //Delay 1.5 second to display the text
-  lcd.clear();                                                         //Clear the LCD
+  pinMode(13, OUTPUT);
+  pinMode(2, OUTPUT);
 
   lcd.setCursor(0, 0);                                                 //Set the LCD cursor to position to position 0,0
   lcd.print("Calibrating");                                       //Print text to screen
   lcd.setCursor(0, 1);
   //Set the LCD cursor to position to position 0,1
   for (int cal_int = 0; cal_int < 2000 ; cal_int ++) {                 //Run this code 2000 times
-    if (cal_int % 125 == 0){
-      lcd.print("."); 
+    if (cal_int % 125 == 0) {
+      lcd.print(".");
       digitalWrite(13, HIGH);                           //Print a dot on the LCD every 125 readings
     }
     read_mpu_6050_data();                                              //Read the raw acc and gyro data from the MPU-6050
     gyro_x_cal += gyro_x;                                              //Add the gyro x-axis offset to the gyro_x_cal variable
     gyro_y_cal += gyro_y;                                              //Add the gyro y-axis offset to the gyro_y_cal variable
-    gyro_z_cal += gyro_z;                                              //Add the gyro z-axis offset to the gyro_z_cal variable
+    gyro_z_cal += gyro_z;
     //We don't want the esc's to be beeping annoyingly. So let's give them a 1000us puls while calibrating the gyro.
     PORTD |= B11110000;                                                     //Set digital poort 4, 5, 6 and 7 high.
     delayMicroseconds(1000);                                                //Wait 1000us.
@@ -99,225 +92,173 @@ void setup() {
     delay(3);   //Delay 3us to simulate the 250Hz program loop
     digitalWrite(13, LOW);
   }
+
   gyro_x_cal /= 2000;                                                  //Divide the gyro_x_cal variable by 2000 to get the avarage offset
   gyro_y_cal /= 2000;                                                  //Divide the gyro_y_cal variable by 2000 to get the avarage offset
   gyro_z_cal /= 2000;                                                  //Divide the gyro_z_cal variable by 2000 to get the avarage offset
 
-  lcd.clear();                                                         //Clear the LCD
-  lcd.setCursor(0, 0);                                                 //Set the LCD cursor to position to position 0,0
-  lcd.print("P:");                                                 //Print text to screen
-  lcd.setCursor(0, 1);                                                 //Set the LCD cursor to position to position 0,1
-  lcd.print("R:");                                                 //Print text to screen
-
   digitalWrite(13, LOW);                                               //All done, turn the LED off
 
-  loop_timer = micros();                                               //Reset the loop timer
+  //Load the battery voltage to the battery_voltage variable.
+  //65 is the voltage compensation for the diode.
+  //12.6V equals ~5V @ Analog 0.
+  //12.6V equals 1023 analogRead(0).
+  //1260 / 1023 = 1.2317.
+  //The variable battery_voltage holds 1050 if the battery voltage is 10.5V.
+  battery_voltage = (analogRead(0) + 65) * 1.2317;
+  lcd.clear();
 
-  receiver_input_channel_1 = 1200;
-  receiver_input_channel_2 = 1200;
-  receiver_input_channel_3 = 1200;
-  receiver_input_channel_4 = 1200;
-
-  //reset all PID controllers
-  pid_i_mem_roll = 0;
-  pid_last_roll_d_error = 0;
-  pid_i_mem_pitch = 0;
-  pid_last_pitch_d_error = 0;
-  pid_i_mem_yaw = 0;
-  pid_last_yaw_d_error = 0;
-
+  resetPID();
   delay(50);
+  loop_timer = micros();
 }
 
 void loop() {
 
-  //if (digitalRead(2) == HIGH) {
+  receiver_input_channel_1 = 1350;
+  receiver_input_channel_2 = 1350;
+  receiver_input_channel_3 = 1350;
+  receiver_input_channel_4 = 1350;
 
-    receiver_input_channel_1 = 1200;
-    receiver_input_channel_2 = 1200;
-    receiver_input_channel_3 = 1200;
-    receiver_input_channel_4 = 1200;
+  read_mpu_6050_data();
 
-    //Read the raw acc and gyro data from the MPU-60
-    read_mpu_6050_data();
+  gyro_x -= gyro_x_cal;                                                //Subtract the offset calibration value from the raw g
+  gyro_y -= gyro_y_cal;                                                //Subtract the offset calibration value from th
+  gyro_z -= gyro_z_cal;                                                //Subtract the offset calibration v
 
-    //65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information).
-    gyro_roll_input = (gyro_roll_input * 0.7) + ((gyro_y / 65.5) * 0.3);   //Gyro pid input is deg/sec.
-    gyro_pitch_input = (gyro_pitch_input * 0.7) + ((gyro_x / 65.5) * 0.3);//Gyro pid input is deg/sec.
-    gyro_yaw_input = (gyro_yaw_input * 0.7) + ((gyro_z / 65.5) * 0.3);      //Gyro pid input is deg/sec.
+  //65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information).
+  gyro_roll_input = (gyro_roll_input * 0.8) + ((gyro_x / 57.14286) * 0.2);            //Gyro pid input is deg/sec.
+  gyro_pitch_input = (gyro_pitch_input * 0.8) + ((gyro_y / 57.14286) * 0.2);         //Gyro pid input is deg/sec.
+  gyro_yaw_input = (gyro_yaw_input * 0.8) + ((gyro_z / 57.14286) * 0.2);               //Gyro pid input is deg/sec.
 
-    //Gyro angle calculations 
-    //0.0000611 = 1 / (250Hz / 65.5)
-    angle_pitch += gyro_x * 0.0000611;                                   //Calculate the traveled pitch angle and add this to the angle_pitch variable
-    angle_roll += gyro_y * 0.0000611;                                    //Calculate the traveled roll angle and add this to the angle_roll variable
+  calculate_angle();
 
-    //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
-    angle_pitch -= angle_roll * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the roll angle to the pitch angel
-    angle_roll += angle_pitch * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the pitch angle to the roll angel
+  //---------------------------------------------------------------------------------------
+  calculate_pid();
+  //---------------------------------------------------------------------------------------
 
-    //Accelerometer angle calculations
-    acc_total_vector = sqrt((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z)); //Calculate the total accelerometer vector
-    //57.296 = 1 / (3.142 / 180) The Arduino asin function is in radians
-    angle_pitch_acc = asin((float)acc_y / acc_total_vector) * 57.296;    //Calculate the pitch angle
-    angle_roll_acc = asin((float)acc_x / acc_total_vector) * -57.296;    //Calculate the roll angle
+  //The battery voltage is needed for compensation.
+  //A complementary filter is used to reduce noise.
+  //0.09853 = 0.08 * 1.2317.
+  battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
 
-    //Place the MPU-6050 spirit level and note the values in the following two lines for calibration
-    angle_pitch_acc -= 0.0;                                              //Accelerometer calibration value for pitch
-    angle_roll_acc -= 0.0;                                               //Accelerometer calibration value for roll
+  //Turn on the led if battery voltage is to low.
+  if (battery_voltage < 1050 && battery_voltage > 600) digitalWrite(2, HIGH);
 
-    if (set_gyro_angles) {                                               //If the IMU is already started
-      angle_pitch = angle_pitch * 0.95 + angle_pitch_acc * 0.05;     //Correct the drift of the gyro pitch angle with the accelerometer pitch angle
-      angle_roll = angle_roll * 0.95 + angle_roll_acc * 0.05;        //Correct the drift of the gyro roll angle with the accelerometer roll angle
-    }
-    else {                                                               //At first start
-      angle_pitch = angle_pitch_acc;                                     //Set the gyro pitch angle equal to the accelerometer pitch angle
-      angle_roll = angle_roll_acc;                                       //Set the gyro roll angle equal to the accelerometer roll angle
-      set_gyro_angles = true;                                            //Set the IMU started flag
-    }
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
+  if (throttle > 1800) throttle = 1800;
 
-    //To dampen the pitch and roll angles a complementary filter is used
-    angle_pitch_output = angle_pitch_output * 0.9 + angle_pitch * 0.1;   //Take 90% of the output pitch value and add 10% of the raw pitch value
-    angle_roll_output = angle_roll_output * 0.9 + angle_roll * 0.1;      //Take 90% of the output roll value and add 10% of the raw roll value
+  esc_1 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
+  esc_2 = throttle - pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
+  esc_3 = throttle + pid_output_pitch - pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 3 (rear-left - CCW)
+  esc_4 = throttle + pid_output_pitch + pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 4 (front-left - CW)
 
-    /*//The PID set point in degrees per second is determined by the roll receiver input.
-      //In the case of deviding by 3 the max roll rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
-      pid_roll_setpoint = 0;
-      //We need a little dead band of 16us for better results.
-      if (receiver_input_channel_1 > 1508)pid_roll_setpoint = receiver_input_channel_1 - 1508;
-      else if (receiver_input_channel_1 < 1492)pid_roll_setpoint = receiver_input_channel_1 - 1492;
+    if (battery_voltage < 1240 && battery_voltage > 800){                   //Is the battery connected?
+      esc_1 += esc_1 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-1 pulse for voltage drop.
+      esc_2 += esc_2 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-2 pulse for voltage drop.
+      esc_3 += esc_3 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-3 pulse for voltage drop.
+      esc_4 += esc_4 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-4 pulse for voltage drop.
+    } 
 
-      pid_roll_setpoint -= roll_level_adjust;                                   //Subtract the angle correction from the standardized receiver roll input value.
-      pid_roll_setpoint /= 3.0;                                                 //Divide the setpoint for the PID roll controller by 3 to get angles in degrees.
+  if (esc_1 < 1200) esc_1 = 1200;                                         //Keep the motors running.
+  if (esc_2 < 1200) esc_2 = 1200;                                         //Keep the motors running.
+  if (esc_3 < 1200) esc_3 = 1200;                                         //Keep the motors running.
+  if (esc_4 < 1200) esc_4 = 1200;                                        //Keep the motors running.
 
-      //The PID set point in degrees per second is determined by the pitch receiver input.
-      //In the case of deviding by 3 the max pitch rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
-      pid_pitch_setpoint = 0;
-      //We need a little dead band of 16us for better results.
-      if (receiver_input_channel_2 > 1508) pid_pitch_setpoint = receiver_input_channel_2 - 1508;
-      else if (receiver_input_channel_2 < 1492) pid_pitch_setpoint = receiver_input_channel_2 - 1492;
+  if (esc_1 > 1600) esc_1 = 1600;                                          //Limit the esc-1 pulse to 2000us.
+  if (esc_2 > 1600) esc_2 = 1600;                                          //Limit the esc-2 pulse to 2000us.
+  if (esc_3 > 1600) esc_3 = 1600;                                          //Limit the esc-3 pulse to 2000us.
+  if (esc_4 > 1600) esc_4 = 1600;
 
-      pid_pitch_setpoint -= pitch_level_adjust;                                  //Subtract the angle correction from the standardized receiver pitch input value.
-      pid_pitch_setpoint /= 3.0;                                                 //Divide the setpoint for the PID pitch controller by 3 to get angles in degrees.
+  //---------------------------------------------------------------------------------------
+  write_LCD();
 
-      //The PID set point in degrees per second is determined by the yaw receiver input.
-      //In the case of deviding by 3 the max yaw rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
-      pid_yaw_setpoint = 0;
-      //We need a little dead band of 16us for better results.
-      if (receiver_input_channel_3 > 1050) { //Do not yaw when turning off the motors.
-      if (receiver_input_channel_4 > 1508) pid_yaw_setpoint = (receiver_input_channel_4 - 1508) / 3.0;
-      else if (receiver_input_channel_4 < 1492) pid_yaw_setpoint = (receiver_input_channel_4 - 1492) / 3.0;
-      }*/
+  //All the information for controlling the motor's is available.
+  //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
+  while(micros() - loop_timer < 4000);                                      //We wait until 4000us are passed.
+  loop_timer = micros();                                                    //Set the timer for the next loop.
 
-    //---------------------------------------------------------------------------------------
-    calculate_pid();
-    //---------------------------------------------------------------------------------------
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
-    if (throttle > 1700) throttle = 1700;
-
-    esc_1 = throttle + pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
-    esc_2 = throttle - pid_output_pitch - pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
-    esc_3 = throttle - pid_output_pitch + pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 3 (rear-left - CCW)
-    esc_4 = throttle + pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 4 (front-left - CW)
-
-    /*battery_voltage = 1239;
-      if (battery_voltage < 1240 && battery_voltage > 800) {                  //Is the battery connected?
-      esc_1 += esc_1 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-1 pulse for voltage drop.
-      esc_2 += esc_2 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-2 pulse for voltage drop.
-      esc_3 += esc_3 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-3 pulse for voltage drop.
-      esc_4 += esc_4 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-4 pulse for voltage drop.
-      }*/
-
-    if (esc_1 < 1200) esc_1 = 1200;                                         //Keep the motors running.
-    if (esc_2 < 1200) esc_2 = 1200;                                         //Keep the motors running.
-    if (esc_3 < 1200) esc_3 = 1200;                                         //Keep the motors running.
-    if (esc_4 < 1200) esc_4 = 1200;                                        //Keep the motors running.
-
-    if (esc_1 > 1600)esc_1 = 1600;                                          //Limit the esc-1 pulse to 2000us.
-    if (esc_2 > 1600)esc_2 = 1600;                                          //Limit the esc-2 pulse to 2000us.
-    if (esc_3 > 1600)esc_3 = 1600;                                          //Limit the esc-3 pulse to 2000us.
-    if (esc_4 > 1600)esc_4 = 1600;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Creating the pulses for the ESC's is explained in this video:
-    //! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
-    //Because of the angle calculation the loop time is getting very important. If the loop time is
-    //longer or shorter than 4000us the angle calculation is off. If you modify the code make sure
-    //that the loop time is still 4000us and no longer! More information can be found on
-    //the Q&A page:
-    //! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
-
-    //---------------------------------------------------------------------------------------
-    write_LCD();                                                         //Write the roll and pitch values to the LCD display
-    //---------------------------------------------------------------------------------------
-
-
-    //All the information for controlling the motor's is available.
-    //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
-    while (micros() - loop_timer < 4000);                                     //We wait until 4000us are passed.
-    loop_timer = micros();                                                    //Set the timer for the next loop.
-
-    PORTD |= B11110000;                                                       //Set digital outputs 4,5,6 and 7 high.
-    timer_channel_1 = esc_1 + loop_timer;                                     //Calculate the time of the faling edge of the esc-1 pulse.
-    timer_channel_2 = esc_2 + loop_timer;                                     //Calculate the time of the faling edge of the esc-2 pulse.
-    timer_channel_3 = esc_3 + loop_timer;                                     //Calculate the time of the faling edge of the esc-3 pulse.
-    timer_channel_4 = esc_4 + loop_timer;                                     //Calculate the time of the faling edge of the esc-4 pulse.
-
-    while (PORTD >= 16) {                                                     //Stay in this loop until output 4,5,6 and 7 are low.
-      esc_loop_timer = micros();                                              //Read the current time.
-      if (timer_channel_1 <= esc_loop_timer) PORTD &= B11101111;               //Set digital output 4 to low if the time is expired.
-      if (timer_channel_2 <= esc_loop_timer) PORTD &= B11011111;               //Set digital output 5 to low if the time is expired.
-      if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111;               //Set digital output 6 to low if the time is expired.
-      if (timer_channel_4 <= esc_loop_timer) PORTD &= B01111111;               //Set digital output 7 to low if the time is expired.
-    }
-
-  /*} else {
-    PORTD |= B11110000;                                                     //Set digital poort 4, 5, 6 and 7 high.
-    delayMicroseconds(1000);                                                //Wait 1000us.
-    PORTD &= B00001111;                                                     //Set digital poort 4, 5, 6 and 7 low.
-    delay(3);   //Delay 3us to simulate the 250Hz program loop
-  }*/
+  PORTD |= B11110000;                                                       //Set digital outputs 4,5,6 and 7 high.
+  timer_channel_1 = esc_1 + loop_timer;                                     //Calculate the time of the faling edge of the esc-1 pulse.
+  timer_channel_2 = esc_2 + loop_timer;                                     //Calculate the time of the faling edge of the esc-2 pulse.
+  timer_channel_3 = esc_3 + loop_timer;                                     //Calculate the time of the faling edge of the esc-3 pulse.
+  timer_channel_4 = esc_4 + loop_timer;                                     //Calculate the time of the faling edge of the esc-4 pulse.
+  
+  while(PORTD >= 16){                                                       //Stay in this loop until output 4,5,6 and 7 are low.
+    esc_loop_timer = micros();                                              //Read the current time.
+    if(timer_channel_1 <= esc_loop_timer)PORTD &= B11101111;                //Set digital output 4 to low if the time is expired.
+    if(timer_channel_2 <= esc_loop_timer)PORTD &= B11011111;                //Set digital output 5 to low if the time is expired.
+    if(timer_channel_3 <= esc_loop_timer)PORTD &= B10111111;                //Set digital output 6 to low if the time is expired.
+    if(timer_channel_4 <= esc_loop_timer)PORTD &= B01111111;                //Set digital output 7 to low if the time is expired.
+  }
 }
 
+void calculate_angle() {
 
-//This routine is called every time input 8, 9, 10 or 11 changed state
+  //Gyro angle calculations
+  //0.0000611 = 1 / (250Hz / 65.5)
+  angle_pitch += gyro_y * 0.0000611;                                   //Calculate the traveled pitch angle and add this to the angle_pitch variable
+  angle_roll += gyro_x * 0.0000611;                                    //Calculate the traveled roll angle and add this to the angle_roll variable
+
+  //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
+  angle_pitch += angle_roll * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the roll angle to the pitch angel
+  angle_roll -= angle_pitch * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the pitch angle to the roll angel
+
+  //Accelerometer angle calculations
+  acc_total_vector = sqrt((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z)); //Calculate the total accelerometer vector
+  //57.296 = 1 / (3.142 / 180) The Arduino asin function is in radians
+  angle_pitch_acc = asin((float)acc_y / acc_total_vector) * 57.296;    //Calculate the pitch angle
+  angle_roll_acc = asin((float)acc_x / acc_total_vector) * -57.296;    //Calculate the roll angle
+
+  //Place the MPU-6050 spirit level and note the values in the following two lines for calibration
+  angle_pitch_acc -= 0.0;                                              //Accelerometer calibration value for pitch
+  angle_roll_acc -= 0.0;                                               //Accelerometer calibration value for rol
+
+  //To dampen the pitch and roll angles a complementary filter is used
+  angle_pitch_output = angle_pitch_output * 0.9 + angle_pitch * 0.1;   //Take 90% of the output pitch value and add 10% of the raw pitch value
+  angle_roll_output = angle_roll_output * 0.9 + angle_roll * 0.1;      //Take 90% of the output roll value and add 10% of the raw roll value
+}
+
+//This routine is called every time input 8, 9, 10 or 11 changed state.
+//Measure the time, using micros(), between each port changes from 0 to 1 and 1 to 0.
+//Basically, the raising and falling edges of the ESC.
 ISR(PCINT0_vect) {
   //Channel 1=========================================
-  if (last_channel_1 == 0 && PINB & B00000001 ) {       //Input 8 changed from 0 to 1
-    last_channel_1 = 1;                                 //Remember current input state
-    timer_1 = micros();                                 //Set timer_1 to micros()
+  if (last_channel_1 == 0 && PINB & B00000001 ) {
+    last_channel_1 = 1;
+    timer_1 = micros();
   }
-  else if (last_channel_1 == 1 && !(PINB & B00000001)) { //Input 8 changed from 1 to 0
-    last_channel_1 = 0;                                 //Remember current input state
-    receiver_input_channel_1 = micros() - timer_1;      //Channel 1 is micros() - timer_1
+  else if (last_channel_1 == 1 && !(PINB & B00000001)) {
+    last_channel_1 = 0;
+    receiver_input_channel_1 = micros() - timer_1;
   }
   //Channel 2=========================================
-  if (last_channel_2 == 0 && PINB & B00000010 ) {       //Input 9 changed from 0 to 1
-    last_channel_2 = 1;                                 //Remember current input state
-    timer_2 = micros();                                 //Set timer_2 to micros()
+  if (last_channel_2 == 0 && PINB & B00000010 ) {
+    last_channel_2 = 1;
+    timer_2 = micros();
   }
-  else if (last_channel_2 == 1 && !(PINB & B00000010)) { //Input 9 changed from 1 to 0
-    last_channel_2 = 0;                                 //Remember current input state
-    receiver_input_channel_2 = micros() - timer_2;      //Channel 2 is micros() - timer_2
+  else if (last_channel_2 == 1 && !(PINB & B00000010)) {
+    last_channel_2 = 0;
+    receiver_input_channel_2 = micros() - timer_2;
   }
   //Channel 3=========================================
-  if (last_channel_3 == 0 && PINB & B00000100 ) {       //Input 10 changed from 0 to 1
-    last_channel_3 = 1;                                 //Remember current input state
-    timer_3 = micros();                                 //Set timer_3 to micros()
+  if (last_channel_3 == 0 && PINB & B00000100 ) {
+    last_channel_3 = 1;
+    timer_3 = micros();
   }
-  else if (last_channel_3 == 1 && !(PINB & B00000100)) { //Input 10 changed from 1 to 0
-    last_channel_3 = 0;                                 //Remember current input state
-    receiver_input_channel_3 = micros() - timer_3 - 500;      //Channel 3 is micros() - timer_3
+  else if (last_channel_3 == 1 && !(PINB & B00000100)) {
+    last_channel_3 = 0;
+    receiver_input_channel_3 = micros() - timer_3 - 500;
   }
   //Channel 4=========================================
-  if (last_channel_4 == 0 && PINB & B00001000 ) {       //Input 11 changed from 0 to 1
-    last_channel_4 = 1;                                 //Remember current input state
-    timer_4 = micros();                                 //Set timer_4 to micros()
+  if (last_channel_4 == 0 && PINB & B00001000 ) {
+    last_channel_4 = 1;
+    timer_4 = micros();
   }
-  else if (last_channel_4 == 1 && !(PINB & B00001000)) { //Input 11 changed from 1 to 0
-    last_channel_4 = 0;                                 //Remember current input state
-    receiver_input_channel_4 = micros() - timer_4;      //Channel 4 is micros() - timer_4
+  else if (last_channel_4 == 1 && !(PINB & B00001000)) {
+    last_channel_4 = 0;
+    receiver_input_channel_4 = micros() - timer_4;
   }
 }
 
@@ -328,64 +269,80 @@ void read_mpu_6050_data() {
   Wire.endTransmission();                                              //End the transmission
   Wire.requestFrom(0x68, 14);                                          //Request 14 bytes from the MPU-6050
   while (Wire.available() < 14);                                       //Wait until all the bytes are received
-  acc_x = Wire.read() << 8 | Wire.read();                              //Add the low and high byte to the acc_x variable
-  acc_y = Wire.read() << 8 | Wire.read();                              //Add the low and high byte to the acc_y variable
-  acc_z = Wire.read() << 8 | Wire.read();                              //Add the low and high byte to the acc_z variable
-  Wire.read() << 8 | Wire.read();                  
-  gyro_x = Wire.read() << 8 | Wire.read();                             //Add the low and high byte to the gyro_x variable
-  gyro_y = Wire.read() << 8 | Wire.read();                             //Add the low and high byte to the gyro_y variable
-  gyro_z = Wire.read() << 8 | Wire.read();                             //Add the low and high byte to the gyro_z variable
-
-  gyro_x -= gyro_x_cal;                                                //Subtract the offset calibration value from the raw gyro_x value
-  gyro_y -= gyro_y_cal;                                                //Subtract the offset calibration value from the raw gyro_y value
-  gyro_z -= gyro_z_cal;                                                //Subtract the offset calibration value from the raw gyro_z value
+  acc_x = Wire.read() << 8 | Wire.read();
+  acc_y = Wire.read() << 8 | Wire.read();
+  acc_z = Wire.read() << 8 | Wire.read();
+  Wire.read() << 8 | Wire.read();
+  gyro_x = Wire.read() << 8 | Wire.read();
+  gyro_y = Wire.read() << 8 | Wire.read();
+  gyro_z = Wire.read() << 8 | Wire.read();
 }
 
 void write_LCD() {                                                     //Subroutine for writing the LCD
-
   //To get a 250Hz program loop (4us) it's only possible to write one character per loop
   //Writing multiple characters is taking to much time
   if (lcd_loop_counter == 14)lcd_loop_counter = 0;                     //Reset the counter after 14 characters
   lcd_loop_counter ++;                                                 //Increase the counter
   if (lcd_loop_counter == 1) {
-    angle_pitch_buffer = esc_1 * 10;                      //Buffer the pitch angle because it will change
-    lcd.setCursor(3, 0);                                               //Set the LCD cursor to position to position 0,0
+    angle_pitch_buffer = esc_2 * 10;                      //Buffer the pitch angle because it will change
+    lcd.setCursor(6, 0);                                               //Set the LCD cursor to position to position 0,0
   }
-
-  if (lcd_loop_counter == 2)lcd.print(abs(angle_pitch_buffer) / 1000); //Print first number
-  if (lcd_loop_counter == 3)lcd.print((abs(angle_pitch_buffer) / 100) % 10); //Print second number
-  if (lcd_loop_counter == 4)lcd.print((abs(angle_pitch_buffer) / 10) % 10); //Print third number
-  if (lcd_loop_counter == 5)lcd.print(".");                            //Print decimal point
-  if (lcd_loop_counter == 6)lcd.print(abs(angle_pitch_buffer) % 10);   //Print decimal number
-
-  if (lcd_loop_counter == 7) {
-    angle_roll_buffer = esc_3 * 10;
-    lcd.setCursor(3, 1);
+  if (lcd_loop_counter == 2) {
+    if (pid_output_pitch < 0)lcd.print("-");                         //Print - if value is negative
+    else lcd.print("+");                                               //Print + if value is negative
   }
+  if (lcd_loop_counter == 3)lcd.print(abs(angle_pitch_buffer) / 1000); //Print first number
+  if (lcd_loop_counter == 4)lcd.print((abs(angle_pitch_buffer) / 100) % 10); //Print second number
+  if (lcd_loop_counter == 5)lcd.print((abs(angle_pitch_buffer) / 10) % 10); //Print third number
+  if (lcd_loop_counter == 6)lcd.print(".");                            //Print decimal point
+  if (lcd_loop_counter == 7)lcd.print(abs(angle_pitch_buffer) % 10);   //Print decimal number
 
-  if (lcd_loop_counter == 8)lcd.print(abs(angle_roll_buffer) / 1000); //Print first number
-  if (lcd_loop_counter == 9)lcd.print((abs(angle_roll_buffer) / 100) % 10); //Print second number
-  if (lcd_loop_counter == 10)lcd.print((abs(angle_roll_buffer) / 10) % 10); //Print third number
-  if (lcd_loop_counter == 11)lcd.print(".");                           //Print decimal point
-  if (lcd_loop_counter == 12)lcd.print(abs(angle_roll_buffer) % 10);   //Print decimal number
+  if (lcd_loop_counter == 8) {
+    angle_roll_buffer = esc_4 * 10;
+    lcd.setCursor(6, 1);
+  }
+  if (lcd_loop_counter == 9) {
+    if (pid_output_roll < 0)lcd.print("-");                          //Print - if value is negative
+    else lcd.print("+");                                               //Print + if value is negative
+  }
+  if (lcd_loop_counter == 10)lcd.print(abs(angle_roll_buffer) / 1000);
+  if (lcd_loop_counter == 11)lcd.print((abs(angle_roll_buffer) / 100) % 10);
+  if (lcd_loop_counter == 12)lcd.print((abs(angle_roll_buffer) / 10) % 10);
+  if (lcd_loop_counter == 13)lcd.print(".");
+  if (lcd_loop_counter == 14)lcd.print(abs(angle_roll_buffer) % 10);
 }
 
 void setup_mpu_6050_registers() {
-  //Activate the MPU-6050
-  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
-  Wire.write(0x6B);                                                    //Send the requested starting register
-  Wire.write(0x00);                                                    //Set the requested starting register
-  Wire.endTransmission();                                              //End the transmission
-  //Configure the accelerometer (+/-8g)
-  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
-  Wire.write(0x1C);                                                    //Send the requested starting register
-  Wire.write(0x10);                                                    //Set the requested starting register
-  Wire.endTransmission();                                              //End the transmission
-  //Configure the gyro (500dps full scale)
-  Wire.beginTransmission(0x68);                                        //Start communicating with the MPU-6050
-  Wire.write(0x1B);                                                    //Send the requested starting register
-  Wire.write(0x08);                                                    //Set the requested starting register
-  Wire.endTransmission();                                              //End the transmission
+  Wire.beginTransmission(0x68);
+  Wire.write(0x6B);                                                          //We want to write to the PWR_MGMT_1 register (6B hex)
+  Wire.write(0x00);                                                          //Set the register bits as 00000000 to activate the gyro
+  Wire.endTransmission();
+
+  Wire.beginTransmission(0x68);
+  Wire.write(0x1B);                                                          //We want to write to the GYRO_CONFIG register (1B hex)
+  Wire.write(0x08);                                                          //Set the register bits as 00001000 (500dps full scale)
+  Wire.endTransmission();                                                    //End the transmission wit
+
+  Wire.beginTransmission(0x68);
+  Wire.write(0x1C);                                                          //We want to write to the ACCEL_CONFIG register (1A hex)
+  Wire.write(0x10);                                                          //Set the register bits as 00010000 (+/- 8g full scale range)
+  Wire.endTransmission();
+
+  //Let's perform a random register check to see if the values are written correct
+  Wire.beginTransmission(0x68);
+  Wire.write(0x1B);                                                          //Start reading @ register 0x1B
+  Wire.endTransmission();                                                    //End the transmission
+  Wire.requestFrom(0x68, 1);                                         //Request 1 bytes from the gyro
+  while (Wire.available() < 1);                                              //Wait until the 6 bytes are received
+  if (Wire.read() != 0x08) {                                                 //Check if the value is 0x08
+    digitalWrite(12, HIGH);                                                  //Turn on the warning led
+    while (1)delay(10);                                                      //Stay in this loop for ever
+  }
+
+  Wire.beginTransmission(0x68);
+  Wire.write(0x1A);                                                          //We want to write to the CONFIG register (1A hex)
+  Wire.write(0x03);                                                          //Set the register bits as 00000011 (Set Digital Low Pass Filter to ~43Hz)
+  Wire.endTransmission();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -395,39 +352,47 @@ void calculate_pid() {
   //Roll calculations
   pid_error_temp = gyro_roll_input - pid_roll_setpoint;
   pid_i_mem_roll += pid_i_gain_roll * pid_error_temp;
-  if (pid_i_mem_roll > PID_MAX_ROLL) pid_i_mem_roll = PID_MAX_ROLL;
-  else if (pid_i_mem_roll < PID_MAX_ROLL * -1) pid_i_mem_roll = PID_MAX_ROLL * -1;
+  if (pid_i_mem_roll > pid_max_roll)pid_i_mem_roll = pid_max_roll;
+  else if (pid_i_mem_roll < pid_max_roll * -1)pid_i_mem_roll = pid_max_roll * -1;
 
   pid_output_roll = pid_p_gain_roll * pid_error_temp + pid_i_mem_roll + pid_d_gain_roll * (pid_error_temp - pid_last_roll_d_error);
-  if (pid_output_roll > PID_MAX_ROLL) pid_output_roll = PID_MAX_ROLL;
-  else if (pid_output_roll < PID_MAX_ROLL * -1) pid_output_roll = PID_MAX_ROLL * -1;
+  if (pid_output_roll > pid_max_roll)pid_output_roll = pid_max_roll;
+  else if (pid_output_roll < pid_max_roll * -1)pid_output_roll = pid_max_roll * -1;
 
   pid_last_roll_d_error = pid_error_temp;
 
   //Pitch calculations
   pid_error_temp = gyro_pitch_input - pid_pitch_setpoint;
   pid_i_mem_pitch += pid_i_gain_pitch * pid_error_temp;
-
-  if (pid_i_mem_pitch > PID_MAX_PITCH)pid_i_mem_pitch = PID_MAX_PITCH;
-  else if (pid_i_mem_pitch < PID_MAX_PITCH * -1)pid_i_mem_pitch = PID_MAX_PITCH * -1;
+  if (pid_i_mem_pitch > pid_max_pitch)pid_i_mem_pitch = pid_max_pitch;
+  else if (pid_i_mem_pitch < pid_max_pitch * -1)pid_i_mem_pitch = pid_max_pitch * -1;
 
   pid_output_pitch = pid_p_gain_pitch * pid_error_temp + pid_i_mem_pitch + pid_d_gain_pitch * (pid_error_temp - pid_last_pitch_d_error);
-  if (pid_output_pitch > PID_MAX_PITCH)pid_output_pitch = PID_MAX_PITCH;
-  else if (pid_output_pitch < PID_MAX_PITCH * -1) pid_output_pitch = PID_MAX_PITCH * -1;
+  if (pid_output_pitch > pid_max_pitch)pid_output_pitch = pid_max_pitch;
+  else if (pid_output_pitch < pid_max_pitch * -1)pid_output_pitch = pid_max_pitch * -1;
 
   pid_last_pitch_d_error = pid_error_temp;
 
   //Yaw calculations
   pid_error_temp = gyro_yaw_input - pid_yaw_setpoint;
   pid_i_mem_yaw += pid_i_gain_yaw * pid_error_temp;
-  if (pid_i_mem_yaw > PID_MAX_YAW) pid_i_mem_yaw = PID_MAX_YAW;
-  else if (pid_i_mem_yaw < PID_MAX_YAW * -1) pid_i_mem_yaw = PID_MAX_YAW * -1;
+  if (pid_i_mem_yaw > pid_max_yaw)pid_i_mem_yaw = pid_max_yaw;
+  else if (pid_i_mem_yaw < pid_max_yaw * -1)pid_i_mem_yaw = pid_max_yaw * -1;
 
   pid_output_yaw = pid_p_gain_yaw * pid_error_temp + pid_i_mem_yaw + pid_d_gain_yaw * (pid_error_temp - pid_last_yaw_d_error);
-  if (pid_output_yaw > PID_MAX_YAW)pid_output_yaw = PID_MAX_YAW;
-  else if (pid_output_yaw < PID_MAX_YAW * -1) pid_output_yaw = PID_MAX_YAW * -1;
+  if (pid_output_yaw > pid_max_yaw)pid_output_yaw = pid_max_yaw;
+  else if (pid_output_yaw < pid_max_yaw * -1)pid_output_yaw = pid_max_yaw * -1;
 
   pid_last_yaw_d_error = pid_error_temp;
 }
 
+void resetPID() {
+  //reset all PID controllers
+  pid_i_mem_roll = 0;
+  pid_last_roll_d_error = 0;
+  pid_i_mem_pitch = 0;
+  pid_last_pitch_d_error = 0;
+  pid_i_mem_yaw = 0;
+  pid_last_yaw_d_error = 0;
+}
 
