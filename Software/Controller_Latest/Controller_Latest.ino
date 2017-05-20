@@ -169,7 +169,7 @@ void loop() {
 
   if (start == 1) {
     //////////////////////////////////////////////////////////////////////////////////////////////
-    throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
+    throttle = receiver_input_channel_2;                                      //We need the throttle signal as a base signal.
     if (throttle > 1800) throttle = 1800;
 
     esc_1 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
@@ -315,7 +315,7 @@ void write_LCD() {                                                     //Subrout
   if (lcd_loop_counter == 14)lcd_loop_counter = 0;                     //Reset the counter after 14 characters
   lcd_loop_counter ++;                                                 //Increase the counter
   if (lcd_loop_counter == 1) {
-    angle_pitch_buffer = pid_roll_setpoint * 10;                      //Buffer the pitch angle because it will change
+    angle_pitch_buffer = esc_1 * 10;                      //Buffer the pitch angle because it will change
     lcd.setCursor(6, 0);                                               //Set the LCD cursor to position to position 0,0
   }
   if (lcd_loop_counter == 2) {
@@ -329,7 +329,7 @@ void write_LCD() {                                                     //Subrout
   if (lcd_loop_counter == 7)lcd.print(abs(angle_pitch_buffer) % 10);   //Print decimal number
 
   if (lcd_loop_counter == 8) {
-    angle_roll_buffer = pid_pitch_setpoint * 10;
+    angle_roll_buffer = esc_3 * 10;
     lcd.setCursor(6, 1);
   }
   if (lcd_loop_counter == 9) {
