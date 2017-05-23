@@ -33,8 +33,7 @@ void setup() {
   PORTD &= B00001111;                              //Set digital poort 4, 5, 6 and 7 low.
   delay(3);
   Serial.println("Starting");
-  start = 0;
-  digitalWrite(12, LOW);                             //Turn off the led.
+digitalWrite(12, LOW);                             //Turn off the led.
   zero_timer = micros();                             //Set the zero_timer for the first loop.
 }
 
@@ -43,12 +42,12 @@ void loop() {
 
   while (zero_timer + 4000 > micros());                      //Start the pulse after 4000 micro seconds.
   zero_timer = micros();                                     //Reset the zero timer.
-  //receiver_input_channel_2 = 1300;
+
   PORTD |= B11110000; //Set digital outputs 4,5,6 and 7 high.
-  timer_channel_1 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 4 is set low.
-  timer_channel_2 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 5 is set low.
-  timer_channel_3 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 6 is set low.
-  timer_channel_4 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 7 is set low.
+  timer_channel_1 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 4 is set low.
+  timer_channel_2 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 5 is set low.
+  timer_channel_3 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 6 is set low.
+  timer_channel_4 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 7 is set low.
 
   while (PORTD >= 16) {                                      //Execute the loop until digital port 8 til 11 is low.
     esc_loop_timer = micros();                               //Check the current time.
@@ -77,7 +76,7 @@ ISR(PCINT0_vect) {
   }
   else if (last_channel_2 == 1 && !(PINB & B00000010)) {
     last_channel_2 = 0;
-    receiver_input_channel_2 = micros() - timer_2 - 500;
+    receiver_input_channel_2 = micros() - timer_2;
   }
   //Channel 3=========================================
   if (last_channel_3 == 0 && PINB & B00000100 ) {

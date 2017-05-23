@@ -127,9 +127,9 @@ void loop() {
 
   calculate_angle();
 
-  if (start == 0 && receiver_input_channel_2 < 500 && receiver_input_channel_4 < 990)
+  if (start == 0 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 < 1100)
     start = 1;
-  if (start == 1 && receiver_input_channel_2 > 990 && receiver_input_channel_4 > 1450){
+  if (start == 1 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1450){
     start = 2;
     
     angle_pitch = angle_pitch_acc;                                          //Set the gyro pitch angle equal to the accelerometer pitch angle when the quadcopter is started.
@@ -143,7 +143,7 @@ void loop() {
     pid_i_mem_yaw = 0;
     pid_last_yaw_d_error = 0;
   } 
-  if (start == 2 && receiver_input_channel_2 < 500 && receiver_input_channel_4 > 1900) start = 0;
+  if (start == 2 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1800) start = 0;
 
   //channel 1 --> roll
   //channel 2 --> throttle
@@ -187,7 +187,7 @@ void loop() {
   if (start == 2) {
 
     if (throttle > 1800) throttle = 1800;
-    if (throttle < 1200) throttle = 1200;
+    if (throttle < 1100) throttle = 1100;
     
     esc_1 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
     esc_2 = throttle - pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
@@ -201,10 +201,10 @@ void loop() {
       esc_4 += esc_4 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-4 pulse for voltage drop.
     }
 
-    if (esc_1 < 1200) esc_1 = 1200;                                         //Keep the motors running.
-    if (esc_2 < 1200) esc_2 = 1200;                                         //Keep the motors running.
-    if (esc_3 < 1200) esc_3 = 1200;                                         //Keep the motors running.
-    if (esc_4 < 1200) esc_4 = 1200;                                      //Keep the motors running.
+    if (esc_1 < 1100) esc_1 = 1100;                                         //Keep the motors running.
+    if (esc_2 < 1100) esc_2 = 1100;                                         //Keep the motors running.
+    if (esc_3 < 1100) esc_3 = 1100;                                         //Keep the motors running.
+    if (esc_4 < 1100) esc_4 = 1100;                                      //Keep the motors running.
 
     if (esc_1 > 1700) esc_1 = 1700;                                          //Limit the esc-1 pulse to 2000us.
     if (esc_2 > 1700) esc_2 = 1700;                                          //Limit the esc-2 pulse to 2000us.
@@ -222,6 +222,9 @@ void loop() {
     digitalWrite(2, HIGH);
   }
 
+  esc_2 = 1000;
+  esc_4 = 1000;
+  
   if(micros() - loop_timer > 4050) digitalWrite(2, HIGH);                   //Turn on the LED if the loop time exceeds 4050us.
   
   //All the information for controlling the motor's is available.
@@ -239,11 +242,12 @@ void loop() {
 
   while (PORTD >= 16) {
     esc_loop_timer = micros();
-
-    if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111;
-    if (timer_channel_2 <= esc_loop_timer) PORTD &= B11011111;
-    if (timer_channel_4 <= esc_loop_timer) PORTD &= B01111111;
+    
     if (timer_channel_1 <= esc_loop_timer) PORTD &= B11101111;
+    if (timer_channel_2 <= esc_loop_timer) PORTD &= B11011111;
+    if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111;
+    if (timer_channel_4 <= esc_loop_timer) PORTD &= B01111111;
+    
   }
 }
 
@@ -294,7 +298,7 @@ ISR(PCINT0_vect) {
   }
   else if (last_channel_2 == 1 && !(PINB & B00000010)) {
     last_channel_2 = 0;
-    receiver_input_channel_2 = micros() - timer_2 - 500;
+    receiver_input_channel_2 = micros() - timer_2;
   }
   //Channel 3=========================================
   if (last_channel_3 == 0 && PINB & B00000100 ) {
