@@ -6,9 +6,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PID gain and limit settings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-float pid_p_gain_roll = 1.1;               //Gain setting for the roll P-controller
-float pid_i_gain_roll = 0.03;              //Gain setting for the roll I-controller
-float pid_d_gain_roll = 11;              //Gain setting for the roll D-controller
+float pid_p_gain_roll = 1.40;               //Gain setting for the roll P-controller
+float pid_i_gain_roll = 0.010;              //Gain setting for the roll I-controller
+float pid_d_gain_roll = 13.00;              //Gain setting for the roll D-controller
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-)
 
 float pid_p_gain_pitch = pid_p_gain_roll;  //Gain setting for the pitch P-controller.
@@ -16,9 +16,9 @@ float pid_i_gain_pitch = pid_i_gain_roll;  //Gain setting for the pitch I-contro
 float pid_d_gain_pitch = pid_d_gain_roll;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-)
 
-float pid_p_gain_yaw = 3.0;                //Gain setting for the pitch P-controller. //4.0
+float pid_p_gain_yaw = 2.00;                //Gain setting for the pitch P-controller. //4.0
 float pid_i_gain_yaw = 0.02;               //Gain setting for the pitch I-controller. //0.02
-float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller.
+float pid_d_gain_yaw = 0.00;                //Gain setting for the pitch D-controller.
 int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-)
 
 //Declaring some global variables
@@ -51,6 +51,10 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 void setup() {
 
+  Serial.begin(9600);
+
+  TWBR = 12;
+
   // set PCIE0 to enable PCMSK0 scan
   PCICR |= (1 << PCIE0);
   PCMSK0 |= (1 << PCINT0);
@@ -72,7 +76,7 @@ void setup() {
   DDRB |= B00110000;                                                        //Configure digital poort 12 and 13 as output.
 
   Wire.begin();                                                        //Start I2C as master
-  TWBR = 12;
+
   setup_mpu_6050_registers();                                          //Setup the registers of the MPU-6050 (500dfs / +/-8g) and start the gyro
 
   pinMode(13, OUTPUT);
@@ -102,8 +106,6 @@ void setup() {
   gyro_y_cal /= 2000;
   gyro_z_cal /= 2000;
 
-  digitalWrite(13, LOW);
-
   battery_voltage = (analogRead(0) + 65) * 1.2317;
   lcd.clear();
   resetPID();
@@ -121,17 +123,15 @@ void loop() {
   gyro_z -= gyro_z_cal;
 
   //65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information).
-  gyro_roll_input = (gyro_roll_input * 0.7) + ((gyro_x / 65.5) * 0.3);   //Gyro pid input is deg/sec.
-  gyro_pitch_input = (gyro_pitch_input * 0.7) + ((gyro_y / 65.5) * 0.3);//Gyro pid input is deg/sec.
-  gyro_yaw_input = (gyro_yaw_input * 0.7) + ((gyro_z / 65.5) * 0.3);      //Gyro pid input is deg/sec.
-
-  calculate_angle();
+  gyro_roll_input = (gyro_roll_input * 0.8) + ((gyro_z / 57.14286) * 0.2);            //Gyro pid input is deg/sec.
+  gyro_pitch_input = (gyro_pitch_input * 0.8) + ((gyro_y / 57.14286) * 0.2);         //Gyro pid input is deg/sec.
+  gyro_yaw_input = (gyro_yaw_input * 0.8) + ((gyro_z / 57.14286) * 0.2);               //Gyro pid input is deg/sec.
 
   if (start == 0 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 < 1100)
     start = 1;
-  if (start == 1 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1450){
+  if (start == 1 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1450) {
     start = 2;
-    
+
     angle_pitch = angle_pitch_acc;                                          //Set the gyro pitch angle equal to the accelerometer pitch angle when the quadcopter is started.
     angle_roll = angle_roll_acc;                                            //Set the gyro roll angle equal to the accelerometer roll angle when the quadcopter is started.
 
@@ -142,7 +142,7 @@ void loop() {
     pid_last_pitch_d_error = 0;
     pid_i_mem_yaw = 0;
     pid_last_yaw_d_error = 0;
-  } 
+  }
   if (start == 2 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1800) start = 0;
 
   //channel 1 --> roll
@@ -150,25 +150,27 @@ void loop() {
   //channel 3 --> pitch
   //channel 4 --> yaw
 
-  pid_pitch_setpoint = 0;
-  pid_roll_setpoint = 0;
-  pid_yaw_setpoint = 0;
+  pid_pitch_setpoint = 0.0;
+  pid_roll_setpoint = 0.0;
+  pid_yaw_setpoint = 0.0;
 
   //The PID set point in degrees per second is determined by the roll receiver input.
   //In the case of dividing by 3 the max roll rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
-  /*pid_roll_setpoint = 0;
-    if(receiver_input_channel_1 > 1508) pid_roll_setpoint = (receiver_input_channel_1 - 1508)/3.0;
-    else if(receiver_input_channel_1 < 1492) pid_roll_setpoint = (receiver_input_channel_1 - 1492)/3.0;
+  /*
+    pid_roll_setpoint = 0;
+    if(receiver_input_channel_1 > 1470) pid_roll_setpoint = (receiver_input_channel_1 - 1470)/3.0;
+    else if(receiver_input_channel_1 < 1460) pid_roll_setpoint = (receiver_input_channel_1 - 1460)/3.0;
 
     pid_pitch_setpoint = 0;
-    if(receiver_input_channel_3 > 1508) pid_pitch_setpoint = -1 * (receiver_input_channel_3 - 1508)/3.0;
-    else if(receiver_input_channel_3 < 1492)pid_pitch_setpoint = -1 * (receiver_input_channel_3 - 1492)/3.0;
+    if(receiver_input_channel_3 > 1470) pid_pitch_setpoint = (receiver_input_channel_3 - 1470)/3.0;
+    else if(receiver_input_channel_3 < 1460)pid_pitch_setpoint = (receiver_input_channel_3 - 1460)/3.0;
 
     pid_yaw_setpoint = 0;
-    if(receiver_input_channel_2 > 900){ //Do not yaw when turning off the motors.
-    if(receiver_input_channel_4 > 1508) pid_yaw_setpoint = (receiver_input_channel_4 - 1508)/3.0;
-    else if(receiver_input_channel_4 < 1492) pid_yaw_setpoint = (receiver_input_channel_4 - 1492)/3.0;
-    }*/
+    if(receiver_input_channel_2 > 1100){ //Do not yaw when turning off the motors.
+    if(receiver_input_channel_4 > 1470) pid_yaw_setpoint = (receiver_input_channel_4 - 1470)/3.0;
+    else if(receiver_input_channel_4 < 1460) pid_yaw_setpoint = (receiver_input_channel_4 - 1460)/3.0;
+    }
+  */
 
   //---------------------------------------------------------------------------------------
   calculate_pid();
@@ -180,25 +182,25 @@ void loop() {
   battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
 
   //Turn on the led if battery voltage is to low.
-  if (battery_voltage < 1050 && battery_voltage > 600) digitalWrite(2, HIGH);
+  if (battery_voltage < 1030 && battery_voltage > 600) digitalWrite(2, HIGH);
 
   throttle = receiver_input_channel_2;
 
   if (start == 2) {
 
     if (throttle > 1800) throttle = 1800;
-    if (throttle < 1100) throttle = 1100;
-    
-    esc_1 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 1 (front-right - CCW)
-    esc_2 = throttle - pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 2 (rear-right - CW)
-    esc_3 = throttle + pid_output_pitch - pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 3 (rear-left - CCW)
-    esc_4 = throttle + pid_output_pitch + pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 4 (front-left - CW)
 
-    if (battery_voltage < 1240 && battery_voltage > 800) {                  //Is the battery connected?
-      esc_1 += esc_1 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-1 pulse for voltage drop.
-      esc_2 += esc_2 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-2 pulse for voltage drop.
-      esc_3 += esc_3 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-3 pulse for voltage drop.
-      esc_4 += esc_4 * ((1240 - battery_voltage) / (float)3500);            //Compensate the esc-4 pulse for voltage drop.
+    esc_1 = throttle + pid_output_pitch - pid_output_roll + pid_output_yaw; //esc 3 (rear-left - CCW)
+    esc_2 = throttle + pid_output_pitch + pid_output_roll - pid_output_yaw; //esc 4 (front-left - CW)
+    esc_3 = throttle - pid_output_pitch + pid_output_roll + pid_output_yaw; //esc 1 (front-right - CCW)
+    esc_4 = throttle - pid_output_pitch - pid_output_roll - pid_output_yaw; //esc 2 (rear-right - CW)
+
+    //voltage drop calculation
+    if (battery_voltage < 1240 && battery_voltage > 800) {
+      esc_1 += esc_1 * ((1240 - battery_voltage) / (float)3500);
+      esc_2 += esc_2 * ((1240 - battery_voltage) / (float)3500);
+      esc_3 += esc_3 * ((1240 - battery_voltage) / (float)3500);
+      esc_4 += esc_4 * ((1240 - battery_voltage) / (float)3500);
     }
 
     if (esc_1 < 1100) esc_1 = 1100;                                         //Keep the motors running.
@@ -212,42 +214,32 @@ void loop() {
     if (esc_4 > 1700) esc_4 = 1700;
 
     //---------------------------------------------------------------------------------------
-    write_LCD();
+    //write_LCD();
   }
   else {
     esc_1 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-1.
     esc_2 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-2.
     esc_3 = 1000;                                                           //If start is not 2 keep a 1000us pulse for ess-3.
     esc_4 = 1000;
-    digitalWrite(2, HIGH);
   }
 
-  esc_2 = 1000;
-  esc_4 = 1000;
-  
-  if(micros() - loop_timer > 4050) digitalWrite(2, HIGH);                   //Turn on the LED if the loop time exceeds 4050us.
-  
   //All the information for controlling the motor's is available.
   //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
   while (micros() - loop_timer < 4000);                                     //We wait until 4000us are passed.
   loop_timer = micros();                                                    //Set the timer for the next loop.
 
   PORTD |= B11110000;                                                       //Set digital outputs 4,5,6 and 7 high.
+  timer_channel_1 = esc_1 + loop_timer;                                     //Calculate the time of the faling edge of the esc-1 pulse.
+  timer_channel_2 = esc_2 + loop_timer;                                     //Calculate the time of the faling edge of the esc-2 pulse.
+  timer_channel_3 = esc_3 + loop_timer;                                     //Calculate the time of the faling edge of the esc-3 pulse.
+  timer_channel_4 = esc_4 + loop_timer;                                     //Calculate the time of the faling edge of the esc-4 pulse
 
-  timer_channel_1 = esc_1 + loop_timer; //Calculate the time of the faling edgsc-4 pu
-  timer_channel_3 = esc_3 + loop_timer;//Calculate the time of the faling edge of p
-  timer_channel_2 = esc_2 + loop_timer;      
-  timer_channel_4 = esc_4 + loop_timer;
-
-
-  while (PORTD >= 16) {
-    esc_loop_timer = micros();
-    
-    if (timer_channel_1 <= esc_loop_timer) PORTD &= B11101111;
-    if (timer_channel_2 <= esc_loop_timer) PORTD &= B11011111;
-    if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111;
-    if (timer_channel_4 <= esc_loop_timer) PORTD &= B01111111;
-    
+  while (PORTD >= 16) {                                                     //Stay in this loop until output 4,5,6 and 7 are low.
+    esc_loop_timer = micros();                                              //Read the current time.
+    if (timer_channel_1 <= esc_loop_timer)PORTD &= B11101111;               //Set digital output 4 to low if the time is expired.
+    if (timer_channel_2 <= esc_loop_timer)PORTD &= B11011111;               //Set digital output 5 to low if the time is expired.
+    if (timer_channel_3 <= esc_loop_timer)PORTD &= B10111111;               //Set digital output 6 to low if the time is expired.
+    if (timer_channel_4 <= esc_loop_timer)PORTD &= B01111111;               //Set digital output 7 to low if the time is expired.
   }
 }
 
@@ -261,17 +253,20 @@ void calculate_angle() {
   //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
   angle_pitch -= angle_roll * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the roll angle to the pitch angel
   angle_roll += angle_pitch * sin(gyro_z * 0.000001066);               //If the IMU has yawed transfer the pitch angle to the roll angel
-  
+
   //Accelerometer angle calculations
-  acc_total_vector = sqrt((acc_x*acc_x)+(acc_y*acc_y)+(acc_z*acc_z));       //Calculate the total accelerometer vector.
-  if(abs(acc_y) < acc_total_vector)                              //Prevent the asin function to produce a NaN
-    angle_pitch_acc = asin((float)acc_y/acc_total_vector)* 57.296;          //Calculate the pitch angle.
-  if(abs(acc_x) < acc_total_vector)                                    //Prevent the asin function to produce a NaN
-    angle_roll_acc = asin((float)acc_x/acc_total_vector)* -57.296;          //Calculate the roll angle.
+  acc_total_vector = sqrt((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z)); //Calculate the total accelerometer vector.
+  if (abs(acc_y) < acc_total_vector)                             //Prevent the asin function to produce a NaN
+    angle_pitch_acc = asin((float)acc_y / acc_total_vector) * 57.296;       //Calculate the pitch angle.
+  if (abs(acc_x) < acc_total_vector)                                   //Prevent the asin function to produce a NaN
+    angle_roll_acc = asin((float)acc_x / acc_total_vector) * -57.296;       //Calculate the roll angle.
 
   //Place the MPU-6050 spirit level and note the values in the following two lines for calibration
   angle_pitch_acc -= 0.0;                                              //Accelerometer calibration value for pitch
   angle_roll_acc -= 0.0;                                               //Accelerometer calibration value for rol
+
+  angle_pitch_output = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;            //Correct the drift of the gyro pitch angle with the accelerometer pitch angle.
+  angle_roll_output = angle_roll * 0.9996 + angle_roll_acc * 0.0004;               //Correct the drift of the gyro roll angle with the accelerometer roll angle.
 
   //To dampen the pitch and roll angles a complementary filter is used
   angle_pitch_output = angle_pitch_output * 0.9 + angle_pitch * 0.1;   //Take 90% of the output pitch value and add 10% of the raw pitch value
@@ -342,11 +337,11 @@ void write_LCD() {                                                     //Subrout
   if (lcd_loop_counter == 14)lcd_loop_counter = 0;                     //Reset the counter after 14 characters
   lcd_loop_counter ++;                                                 //Increase the counter
   if (lcd_loop_counter == 1) {
-    angle_pitch_buffer = esc_1 * 10;                      //Buffer the pitch angle because it will change
+    angle_pitch_buffer = pid_output_pitch * 10;                      //Buffer the pitch angle because it will change
     lcd.setCursor(6, 0);                                               //Set the LCD cursor to position to position 0,0
   }
   if (lcd_loop_counter == 2) {
-    if (angle_pitch_output < 0)lcd.print("-");                         //Print - if value is negative
+    if (pid_output_pitch < 0)lcd.print("-");                         //Print - if value is negative
     else lcd.print("+");                                               //Print + if value is negative
   }
   if (lcd_loop_counter == 3)lcd.print(abs(angle_pitch_buffer) / 1000); //Print first number
@@ -356,11 +351,11 @@ void write_LCD() {                                                     //Subrout
   if (lcd_loop_counter == 7)lcd.print(abs(angle_pitch_buffer) % 10);   //Print decimal number
 
   if (lcd_loop_counter == 8) {
-    angle_roll_buffer = esc_3 * 10;
+    angle_roll_buffer = pid_output_roll * 10;
     lcd.setCursor(6, 1);
   }
   if (lcd_loop_counter == 9) {
-    if (angle_roll_output < 0)lcd.print("-");                          //Print - if value is negative
+    if (pid_output_roll < 0)lcd.print("-");                          //Print - if value is negative
     else lcd.print("+");                                               //Print + if value is negative
   }
   if (lcd_loop_counter == 10)lcd.print(abs(angle_roll_buffer) / 1000);
