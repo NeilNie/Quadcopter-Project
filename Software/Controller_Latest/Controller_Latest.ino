@@ -22,7 +22,7 @@ float pid_d_gain_roll = 13.00;              //Gain setting for the roll D-contro
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-)
 
 float pid_p_gain_pitch = 1.20;  //Gain setting for the pitch P-controller.
-float pid_i_gain_pitch = 0.025;  //Gain setting for the pitch I-controller.
+float pid_i_gain_pitch = 0.020;  //Gain setting for the pitch I-controller.
 float pid_d_gain_pitch = 13.00;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-)
 
@@ -156,30 +156,30 @@ void loop() {
   }
   if (start == 2 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1800) start = 0;
 
-  //channel 1 --> roll
+  //channel 1 --> yaw
   //channel 2 --> throttle
   //channel 3 --> pitch
-  //channel 4 --> yaw
+  //channel 4 --> roll
 
   pid_roll_setpoint = 0;
-  //if (receiver_input_channel_1 > 1510) pid_roll_setpoint = receiver_input_channel_1 - 1510;
-  //else if (receiver_input_channel_1 < 1490) pid_roll_setpoint = receiver_input_channel_1 - 1490;
+  if (receiver_input_channel_4 > 1510) pid_roll_setpoint = receiver_input_channel_4 - 1510;
+  else if (receiver_input_channel_4 < 1490) pid_roll_setpoint = receiver_input_channel_4 - 1490;
 
   pid_roll_setpoint -= roll_level_adjust;                                   //Subtract the angle correction from the standardized receiver roll input value.
   pid_roll_setpoint /= 3.0;                                                 //Divide the setpoint for the PID roll controller by 3 to get angles in degrees.
 
   pid_pitch_setpoint = 0;
-  //if (receiver_input_channel_3 > 1510) pid_pitch_setpoint = receiver_input_channel_3 - 1510;
-  //else if (receiver_input_channel_3 < 1490) pid_pitch_setpoint = receiver_input_channel_3 - 1490;
+  if (receiver_input_channel_3 > 1510) pid_pitch_setpoint = receiver_input_channel_3 - 1510;
+  else if (receiver_input_channel_3 < 1490) pid_pitch_setpoint = receiver_input_channel_3 - 1490;
 
   pid_pitch_setpoint -= pitch_level_adjust;                                  //Subtract the angle correction from the standardized receiver pitch input value.
   pid_pitch_setpoint /= 3.0;                                                 //Divide the setpoint for the PID pitch controller by 3 to get angles in degrees.
 
   pid_yaw_setpoint = 0;
-  /*if (receiver_input_channel_2 > 1100) { //Do not yaw when turning off the motors.
-    if (receiver_input_channel_4 > 1510) pid_yaw_setpoint = (receiver_input_channel_4 - 1510) / 5.0;
-    else if (receiver_input_channel_4 < 1490) pid_yaw_setpoint = (receiver_input_channel_4 - 1490) / 5.0;
-    }*/
+  if (receiver_input_channel_2 > 1100) { //Do not yaw when turning off the motors.
+    if (receiver_input_channel_1 > 1510) pid_yaw_setpoint = (receiver_input_channel_1 - 1510) / 5.0;
+    else if (receiver_input_channel_1 < 1490) pid_yaw_setpoint = (receiver_input_channel_1 - 1490) / 5.0;
+  }
 
   //---------------------------------------------------------------------------------------
   calculate_pid();
@@ -223,7 +223,7 @@ void loop() {
     if (esc_4 > 1700) esc_4 = 1700;
 
     //---------------------------------------------------------------------------------------
-    write_LCD();
+    //write_LCD();
   }
   else {
     esc_1 = 1000;
@@ -273,11 +273,11 @@ void calculate_angle() {
   angle_pitch_acc += 3.0;                                                   //Accelerometer calibration value for pitch.
   angle_roll_acc += 3.0;                                                    //Accelerometer calibration value for roll.
 
-  angle_pitch = angle_pitch * 0.9994 + angle_pitch_acc * 0.0006;
-  angle_roll = angle_roll * 0.9994 + angle_roll_acc * 0.0006;
+  angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;
+  angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;
 
-  pitch_level_adjust = angle_pitch * 6;
-  roll_level_adjust = angle_roll * 6;
+  pitch_level_adjust = angle_pitch * 8;
+  roll_level_adjust = angle_roll * 8;
 }
 
 //This routine is called every time input 8, 9, 10 or 11 changed state.
