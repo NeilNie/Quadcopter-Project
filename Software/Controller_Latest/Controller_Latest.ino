@@ -16,13 +16,13 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PID gain and limit settings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-float pid_p_gain_roll = 1.20;               //Gain setting for the roll P-controller
+float pid_p_gain_roll = 1.30;               //Gain setting for the roll P-controller
 float pid_i_gain_roll = 0.02;              //Gain setting for the roll I-controller
 float pid_d_gain_roll = 13.00;              //Gain setting for the roll D-controller
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-)
 
-float pid_p_gain_pitch = 1.20;  //Gain setting for the pitch P-controller.
-float pid_i_gain_pitch = 0.020;  //Gain setting for the pitch I-controller.
+float pid_p_gain_pitch = 1.30;  //Gain setting for the pitch P-controller.
+float pid_i_gain_pitch = 0.02;  //Gain setting for the pitch I-controller.
 float pid_d_gain_pitch = 13.00;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-)
 
@@ -139,21 +139,8 @@ void loop() {
 
   calculate_angle();
 
-  if (start == 0 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 < 1100)
-    start = 1;
-  if (start == 1 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1450) {
-    start = 2;
-    
-    angle_pitch = angle_pitch_acc;                                          //Set the gyro pitch angle equal to the accelerometer pitch angle when the quadcopter is started.
-    angle_roll = angle_roll_acc;   
-    //Reset the PID controllers for a bumpless start.
-    pid_i_mem_roll = 0;
-    pid_last_roll_d_error = 0;
-    pid_i_mem_pitch = 0;
-    pid_last_pitch_d_error = 0;
-    pid_i_mem_yaw = 0;
-    pid_last_yaw_d_error = 0;
-  }
+  if (start == 0 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 < 1100) start = 1;
+  if (start == 1 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1450) resetPID(); start = 2;
   if (start == 2 && receiver_input_channel_2 < 1100 && receiver_input_channel_1 > 1800) start = 0;
 
   //channel 1 --> yaw
@@ -173,12 +160,12 @@ void loop() {
   else if (receiver_input_channel_3 < 1490) pid_pitch_setpoint = receiver_input_channel_3 - 1490;
 
   pid_pitch_setpoint -= pitch_level_adjust;                                  //Subtract the angle correction from the standardized receiver pitch input value.
-  pid_pitch_setpoint /= 3.0;                                                 //Divide the setpoint for the PID pitch controller by 3 to get angles in degrees.
+  pid_pitch_setpoint /= -3.0;                                                 //Divide the setpoint for the PID pitch controller by 3 to get angles in degrees.
 
   pid_yaw_setpoint = 0;
   if (receiver_input_channel_2 > 1100) { //Do not yaw when turning off the motors.
-    if (receiver_input_channel_1 > 1510) pid_yaw_setpoint = (receiver_input_channel_1 - 1510) / 5.0;
-    else if (receiver_input_channel_1 < 1490) pid_yaw_setpoint = (receiver_input_channel_1 - 1490) / 5.0;
+    if (receiver_input_channel_1 > 1510) pid_yaw_setpoint = (receiver_input_channel_1 - 1510) / 3.0;
+    else if (receiver_input_channel_1 < 1490) pid_yaw_setpoint = (receiver_input_channel_1 - 1490) / 3.0;
   }
 
   //---------------------------------------------------------------------------------------
@@ -450,15 +437,20 @@ void calculate_pid() {
 }
 
 void resetPID() {
+
+  angle_pitch = angle_pitch_acc;
+  angle_roll = angle_roll_acc;
+
   //reset all PID controllers
+  pid_pitch_setpoint = 0;
+  pid_roll_setpoint = 0;
+  pid_yaw_setpoint = 0;
+  //Reset the PID controllers for a bumpless start.
   pid_i_mem_roll = 0;
   pid_last_roll_d_error = 0;
   pid_i_mem_pitch = 0;
   pid_last_pitch_d_error = 0;
   pid_i_mem_yaw = 0;
   pid_last_yaw_d_error = 0;
-  pid_pitch_setpoint = 0;
-  pid_roll_setpoint = 0;
-  pid_yaw_setpoint = 0;
 }
 
