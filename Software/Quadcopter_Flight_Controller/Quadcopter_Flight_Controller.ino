@@ -87,7 +87,7 @@ void setup() {
 
   setup_mpu_6050_registers();                                          //Setup the registers of the MPU-6050 (500dfs / +/-8g) and start the gyro
 
-  pinMode(13, OUTPUT);
+  pinMode(12, OUTPUT);
   pinMode(2, OUTPUT);
 
   lcd.setCursor(0, 0);
@@ -96,18 +96,17 @@ void setup() {
   for (int cal_int = 0; cal_int < 2000 ; cal_int ++) {
     if (cal_int % 125 == 0) {
       lcd.print(".");
-      digitalWrite(13, HIGH);                           //Print a dot on the LCD every 125 readings
+      digitalWrite(12, HIGH);
     }
+    digitalWrite(12, LOW);
     read_mpu_6050_data();
     gyro_x_cal += gyro_x;
     gyro_y_cal += gyro_y;
     gyro_z_cal += gyro_z;
-
     PORTD |= B11110000;                                                     //Set digital poort 4, 5, 6 and 7 high.
     delayMicroseconds(1000);
     PORTD &= B00001111;                                                     //Set digital poort 4, 5, 6 and 7 low.
     delay(3);   //Delay 3us to simulate the 25
-    digitalWrite(13, LOW);
   }
 
   gyro_x_cal /= 2000;
@@ -182,7 +181,11 @@ void loop() {
   battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
 
   //Turn on the led if battery voltage is to low.
-  if (battery_voltage < 1030 && battery_voltage > 600) digitalWrite(2, HIGH);
+  if (battery_voltage < 1030 && battery_voltage > 600){
+    digitalWrite(12, HIGH);
+  }else{
+    digitalWrite(12, LOW);
+  }
 
   throttle = receiver_input_channel_2;
 
@@ -221,6 +224,7 @@ void loop() {
     esc_2 = 1000;
     esc_3 = 1000;
     esc_4 = 1000;
+    digitalWrite(12, HIGH);
   }
 
   while (micros() - loop_timer < 4000);                                     //We wait until 4000us are passed.
