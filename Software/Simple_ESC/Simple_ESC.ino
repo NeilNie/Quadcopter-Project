@@ -7,7 +7,7 @@ unsigned long zero_timer, timer_1, timer_2, timer_3, timer_4, current_time;
 //Setup routine
 void setup() {
   Serial.begin(9600);
-  DDRD |= B11110000;                                 //Configure digital poort 4, 5, 6 and 7 as output
+  DDRD |= B11111100;                                 //Configure digital poort 4, 5, 6 and 7 as output
 
   PCICR |= (1 << PCIE0);                             // set PCIE0 to enable PCMSK0 scan
   PCMSK0 |= (1 << PCINT0);                           // set PCINT0 (digital input 8) to trigger an interrupt on state change
@@ -15,9 +15,9 @@ void setup() {
   PCMSK0 |= (1 << PCINT2);                           // set PCINT2 (digital input 10)to trigger an interrupt on state change
   PCMSK0 |= (1 << PCINT3);                           // set PCINT3 (digital input 11)to trigger an interrupt on state change
 
-  PORTD |= B11110000;                              //Set digital poort 4, 5, 6 and 7 high.
+  PORTD |= B11111100;                              //Set digital poort 4, 5, 6 and 7 high.
   delayMicroseconds(1000);                         //Wait 1000us (We can use delayMicroseconds because the receiver interrupt routine is not used).
-  PORTD &= B00001111;                              //Set digital poort 4, 5, 6 and 7 low.
+  PORTD &= B00111111;                              //Set digital poort 4, 5, 6 and 7 low.
   delay(3);
   Serial.println("Starting");
   digitalWrite(12, LOW);                             //Turn off the led.
@@ -29,18 +29,17 @@ void loop() {
 
   while (zero_timer + 4000 > micros());                      //Start the pulse after 4000 micro seconds.
   zero_timer = micros();                                     //Reset the zero timer.
-    receiver_input_channel_1 = 1000;
-  receiver_input_channel_2 = 1200;
-  receiver_input_channel_3 = 1000;
-  receiver_input_channel_4 = 1000;
-  PORTD |= B11110000; //Set digital outputs 4,5,6 and 7 high.
-  timer_channel_1 = receiver_input_channel_1 + zero_timer;   //Calculate the time when digital port 4 is set low.
-  timer_channel_2 = receiver_input_channel_2 + zero_timer;   //Calculate the time when digital port 5 is set low.
+
+  PORTD |= B11111100; //Set digital outputs 4,5,6 and 7 high.
+  timer_channel_1 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 4 is set low.
+  timer_channel_2 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 5 is set low.
   timer_channel_3 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 6 is set low.
-  timer_channel_4 = receiver_input_channel_4 + zero_timer;   //Calculate the time when digital port 7 is set low.
+  timer_channel_4 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 7 is set low.
 
   while (PORTD >= 16) {                                      //Execute the loop until digital port 8 til 11 is low.
-    esc_loop_timer = micros();                               //Check the current time.
+    esc_loop_timer = micros();    
+    if (timer_channel_1 <= esc_loop_timer) PORTD &= B11111011; //When the delay time is expired, digital port 4 is set low.
+    if (timer_channel_2 <= esc_loop_timer) PORTD &= B11110111;//Check the current time.
     if (timer_channel_1 <= esc_loop_timer) PORTD &= B11101111; //When the delay time is expired, digital port 4 is set low.
     if (timer_channel_2 <= esc_loop_timer) PORTD &= B11011111; //When the delay time is expired, digital port 5 is set low.
     if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111; //When the delay time is expired, digital port 6 is set low.
@@ -76,7 +75,7 @@ ISR(PCINT0_vect) {
   }
   else if (last_channel_2 == 1) {                              //Input 9 is not high and changed from 1 to 0
     last_channel_2 = 0;                                        //Remember current input state
-    receiver_input_channel_2 = current_time - timer_2 - 500;   //Channel 2 is current_time - timer_2 ||During testing, we are using the red rc ||
+    receiver_input_channel_2 = current_time - timer_2 ;   //Channel 2 is current_time - timer_2 ||During testing, we are using the red rc ||
   }
   //Channel 3=========================================
   if (PINB & B00000100 ) {                                     //Is input 10 high?
