@@ -1,13 +1,13 @@
 //Declaring Variables
 byte last_channel_1, last_channel_2, last_channel_3, last_channel_4;
 int receiver_input_channel_1, receiver_input_channel_2, receiver_input_channel_3, receiver_input_channel_4, start;
-unsigned long timer_channel_1, timer_channel_2, timer_channel_3, timer_channel_4, esc_timer, esc_loop_timer;
+unsigned long timer_channel_1, timer_channel_2, timer_channel_3, timer_channel_4, timer_channel_5, timer_channel_6, esc_timer, esc_loop_timer;
 unsigned long zero_timer, timer_1, timer_2, timer_3, timer_4, current_time;
 
 //Setup routine
 void setup() {
   Serial.begin(9600);
-  DDRD |= B11111100;                                 //Configure digital poort 4, 5, 6 and 7 as output
+  DDRD |= B11111100;                                 //Configure digital poort 2, 3, 4, 5, 6 and 7 as output
 
   PCICR |= (1 << PCIE0);                             // set PCIE0 to enable PCMSK0 scan
   PCMSK0 |= (1 << PCINT0);                           // set PCINT0 (digital input 8) to trigger an interrupt on state change
@@ -22,10 +22,17 @@ void setup() {
   Serial.println("Starting");
   digitalWrite(12, LOW);                             //Turn off the led.
   zero_timer = micros();                             //Set the zero_timer for the first loop.
+
+  receiver_input_channel_3 = 1000;
 }
 
 //Main program loop
 void loop() {
+
+  if (receiver_input_channel_3 < 1300) {
+    receiver_input_channel_3++;
+  }
+
 
   while (zero_timer + 4000 > micros());                      //Start the pulse after 4000 micro seconds.
   zero_timer = micros();                                     //Reset the zero timer.
@@ -35,15 +42,18 @@ void loop() {
   timer_channel_2 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 5 is set low.
   timer_channel_3 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 6 is set low.
   timer_channel_4 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 7 is set low.
+  timer_channel_5 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 7 is set low.
+  timer_channel_6 = receiver_input_channel_3 + zero_timer;   //Calculate the time when digital port 7 is set low.
+
 
   while (PORTD >= 16) {                                      //Execute the loop until digital port 8 til 11 is low.
-    esc_loop_timer = micros();    
+    esc_loop_timer = micros();
     if (timer_channel_1 <= esc_loop_timer) PORTD &= B11111011; //When the delay time is expired, digital port 4 is set low.
     if (timer_channel_2 <= esc_loop_timer) PORTD &= B11110111;//Check the current time.
-    if (timer_channel_1 <= esc_loop_timer) PORTD &= B11101111; //When the delay time is expired, digital port 4 is set low.
-    if (timer_channel_2 <= esc_loop_timer) PORTD &= B11011111; //When the delay time is expired, digital port 5 is set low.
-    if (timer_channel_3 <= esc_loop_timer) PORTD &= B10111111; //When the delay time is expired, digital port 6 is set low.
-    if (timer_channel_4 <= esc_loop_timer) PORTD &= B01111111; //When the delay time is expired, digital port 7 is set low.
+    if (timer_channel_3 <= esc_loop_timer) PORTD &= B11101111; //When the delay time is expired, digital port 4 is set low.
+    if (timer_channel_4 <= esc_loop_timer) PORTD &= B11011111; //When the delay time is expired, digital port 5 is set low.
+    if (timer_channel_5 <= esc_loop_timer) PORTD &= B10111111; //When the delay time is expired, digital port 6 is set low.
+    if (timer_channel_6 <= esc_loop_timer) PORTD &= B01111111; //When the delay time is expired, digital port 7 is set low.
   }
 }
 

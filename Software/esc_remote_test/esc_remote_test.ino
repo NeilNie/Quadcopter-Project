@@ -3,9 +3,13 @@ byte last_channel_1, last_channel_2, last_channel_3, last_channel_4;
 int receiver_input_channel_1, receiver_input_channel_2, receiver_input_channel_3, receiver_input_channel_4, start;
 unsigned long timer_channel_1, timer_channel_2, timer_channel_3, timer_channel_4, esc_timer, esc_loop_timer;
 unsigned long zero_timer, timer_1, timer_2, timer_3, timer_4, current_time;
+int receiver_input_channel_3 = 1200
+
 
 //Setup routine
+
 void setup() {
+  
   Serial.begin(9600);
   DDRD |= B11110000;                                 //Configure digital poort 4, 5, 6 and 7 as output
 
@@ -33,7 +37,7 @@ void setup() {
   PORTD &= B00001111;                              //Set digital poort 4, 5, 6 and 7 low.
   delay(3);
   Serial.println("Starting");
-digitalWrite(12, LOW);                             //Turn off the led.
+  digitalWrite(12, LOW);                             //Turn off the led.
   zero_timer = micros();                             //Set the zero_timer for the first loop.
 }
 
